@@ -1,0 +1,7 @@
+<h2>Index</h2>
+<h3>List of service providers: <small>(<a href="add">+</a>)</small> </h3>
+<ul>
+    {% for provider in provider_list %}
+    <li><a href="{{provider.name}}">{{ provider.name }}</a> <small>(<a href="remove/?name={{provider.name}}">remove</a>)</small> </li>
+    {% endfor %}
+</ul>

@@ -1,0 +1,10 @@
+
+{% block content %}
+    <h2>Provider: {{provider.name}}</h2>
+     <h3>List of services: <small>(<a href="add">+</a>)</small> </h3>
+    <ul>
+        {% for service in provider.service_set.all %}
+            <li><a href="{{service.name}}">{{ service.name }}</a> <small>(<a href="remove/?name={{service.name}}">remove</a>)</small></li>
+        {% endfor %}
+    </ul>
+{% endblock %}

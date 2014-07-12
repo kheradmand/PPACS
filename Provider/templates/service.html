@@ -1,0 +1,63 @@
+<h2>Service: {{service.name}}</h2>
+<form action="" method="post">
+    {% csrf_token %}
+    <h3>Behaviour:</h3>
+    <label>Inputs: <small>(<a href="">+</a>)</small></label>
+    <ul>
+        {% for input in service.input_set.all %}
+            <li>({{ input.input }}) <small>(<a href="">remove</a>)</small></li>
+        {% endfor %}
+    </ul>
+    {{ form.as_p }}
+    <h3>Privacy Policy Rules: <small>(<a href="">+</a>)</small></h3>
+    <ul>
+        {% for policy in service.service_privacy_policy_rule_set.all %}
+            <li>
+                <small>(<a href="">remove</a>)</small>
+                <p><label>Data:</label> {{policy.dataType.name}}</p>
+                <p><label>Time to live:</label> {{policy.ttl}}</p>
+                <p>Rules: <small>(<a href="">+</a>)</small></p>
+                <ul>
+                    {% for rule in policy.purpose.all %}
+                        <li>
+                            {% if rule.onlyFor == True %}
+                            Only
+                            {% else %}
+                            Not
+                            {% endif %}
+                            for {{rule.goal.name}}
+                        <small>(<a href="">remove</a>)</small>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </li>
+        {% endfor %}
+    </ul>
+    <h3>Access Control List: <small>(<a href="">+</a>)</small></h3>
+    <ul>
+        {% for element in service.access_control_element_set.all %}
+            <li>
+                <small>(<a href="">remove</a>)</small>
+                <p>User: <small>(<a href="">+</a>)</small></p>
+                <ul>
+                    {% for expr in element.userRules.all %}
+                        <li>
+                           {{expr.variable}} {{expr.operator}} {{expr.value}}
+                        <small>(<a href="">remove</a>)</small>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <p>Environment: <small>(<a href="">+</a>)</small></p>
+                <ul>
+                    {% for expr in element.environmentRules.all %}
+                        <li>
+                           {{expr.variable}} {{expr.operator}} {{expr.value}}
+                        <small>(<a href="">remove</a>)</small>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </li>
+        {% endfor %}
+    </ul>
+    <input type="submit" value="Submit" />
+</form>
