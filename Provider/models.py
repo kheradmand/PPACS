@@ -29,10 +29,17 @@ class Goal(models.Model):
     def __unicode__(self):
         return self.name
 
+class TypeList(models.Model): #TODO: refine
+    list = models.CharField(max_length=10000)
+    def __unicode__(self):
+        return self.list
+
+
 class Service(models.Model):
     name = models.CharField(max_length=100)
     provider = models.ForeignKey(Provider)
-    output = models.ForeignKey(DataType)
+    inputs = models.ManyToManyField(TypeList, related_name="service_input_set")
+    output = models.ForeignKey(TypeList, related_name="service_output_set")
     function = models.URLField(blank=True)
     #input
     #privacypolicyrule
@@ -41,10 +48,9 @@ class Service(models.Model):
     def __unicode__(self):
         return self.name
 
+    class Meta:
+        unique_together = ('name', 'provider')
 
-class Input(models.Model): #TODO: refine
-    input = models.CharField(max_length=10000)
-    service = models.ForeignKey(Service, related_name='input_set')
 
 
 class Purpose(models.Model):

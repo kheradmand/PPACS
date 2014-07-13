@@ -1,13 +1,13 @@
 {% extends 'base.html'%}
 {%block content%}
-<h2>Service: {{service.name}}</h2>
+<h2>Service: {{service.provider.name}}/{{service.name}} <small>(<a href="../">back</a>)</small></h2>
 <form action="" method="post">
     {% csrf_token %}
     <h3>Behaviour:</h3>
-    <label>Inputs: <small>(<a href="">+</a>)</small></label>
+    <label>Inputs: <small>(<a href="input/add">+</a>)</small></label>
     <ul>
-        {% for input in service.input_set.all %}
-            <li>({{ input.input }}) <small>(<a href="">remove</a>)</small></li>
+        {% for input in service.inputs.all %}
+            <li>({{ input.list }}) <small>(<a href="input/remove/?id={{input.id}}">remove</a>)</small></li>
         {% endfor %}
     </ul>
     {{ form.as_p }}

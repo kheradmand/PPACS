@@ -4,8 +4,10 @@ from django.shortcuts           import render, get_object_or_404, HttpResponseRe
 from django.forms               import *
 from django.http                import HttpResponse
 
-from Provider.models import Provider, Service, DataType, ServicePrivacyPolicyRule, Purpose, AccessControlElement,Expression
-from Provider.forms  import ProviderForm, ServiceForm, PrivacyPolicyForm, PurposeForm, ExpressionForm
+from Provider.models import Provider, Service, DataType, ServicePrivacyPolicyRule, Purpose, AccessControlElement,Expression, \
+    TypeList
+from Provider.forms  import ProviderForm, ServiceForm, PrivacyPolicyForm, PurposeForm, ExpressionForm, TypeListForm
+
 
 def index(request):
     context = {'provider_list': Provider.objects.all()}
@@ -26,7 +28,7 @@ def provider_add(request):
     else:
         form = ProviderForm()
 
-    return render(request, 'add.html', {'form': form})
+    return render(request, 'add.html', {'form': form, 'cancel': reverse('index')})
 
 def provider_remove(request):
     if 'id' in request.GET.keys():
@@ -51,7 +53,7 @@ def service_add(request, provider_id, service_id=None):
             form = ServiceForm(instance = service)
         else:
             form = ServiceForm()
-    return render(request, 'add.html', {'form': form})
+    return render(request, 'add.html', {'form': form, 'cancel': reverse('provider_index', kwargs={'provider_id': provider_id})})
 
 def service_remove(request, provider_id):
     if 'id' in request.GET.keys():
@@ -73,6 +75,31 @@ def service_index(request, provider_id, service_id):
     return render(request, 'service.html', context)
 
 
+def input_add(request, provider_id, service_id):
+    if request.method == 'POST':
+        form = TypeListForm(request.POST)
+        try:
+            service = Service.objects.get(pk=service_id)
+        except Service.DoesNotExist:
+            service = None
+
+        if form.is_valid() and service:
+            form.save(service=service)
+            return HttpResponseRedirect(reverse('service_index', kwargs={'provider_id': provider_id, 'service_id': service_id}))
+    else:
+        form = TypeListForm()
+    return render(request, 'add.html', {'form': form, 'cancel': reverse('service_index', kwargs={'provider_id': provider_id, 'service_id': service_id})})
+
+def input_remove(request, provider_id, service_id):
+    if 'id' in request.GET.keys():
+        id = request.GET['id']
+        service = Service.objects.get(pk=service_id)
+        list = TypeList.objects.get(pk=id)
+        service.inputs.remove(list)
+        service.save()
+    return HttpResponseRedirect(reverse('service_index', kwargs={'provider_id': provider_id, 'service_id': service_id}))
+
+
 def policy_add(request, provider_id, service_id):
     if request.method == 'POST':
         form = PrivacyPolicyForm(request.POST)
@@ -86,7 +113,7 @@ def policy_add(request, provider_id, service_id):
             return HttpResponseRedirect(reverse('service_index', kwargs={'provider_id': provider_id, 'service_id': service_id}))
     else:
         form = PrivacyPolicyForm()
-    return render(request, 'add.html', {'form': form})
+    return render(request, 'add.html', {'form': form, 'cancel': reverse('service_index', kwargs={'provider_id': provider_id, 'service_id': service_id})})
 
 def policy_remove(request, provider_id, service_id):
     if 'id' in request.GET.keys():
@@ -107,7 +134,7 @@ def purpose_add(request, provider_id, service_id, policy_id):
             return HttpResponseRedirect(reverse('service_index', kwargs={'provider_id': provider_id, 'service_id': service_id}))
     else:
         form = PurposeForm()
-    return render(request, 'add.html', {'form': form})
+    return render(request, 'add.html', {'form': form, 'cancel': reverse('service_index', kwargs={'provider_id': provider_id, 'service_id': service_id})})
 
 def purpose_remove(request, provider_id, service_id, policy_id):
     if 'id' in request.GET.keys():
@@ -141,7 +168,7 @@ def expr_add(request, provider_id, service_id, element_id, target):
             return HttpResponseRedirect(reverse('service_index', kwargs={'provider_id': provider_id, 'service_id': service_id}))
     else:
         form = ExpressionForm()
-    return render(request, 'add.html', {'form': form})
+    return render(request, 'add.html', {'form': form, 'cancel': reverse('service_index', kwargs={'provider_id': provider_id, 'service_id': service_id})})
 
 
 def expr_remove(request, provider_id, service_id, element_id, target):
