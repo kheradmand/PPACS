@@ -85,7 +85,7 @@ class PurposeForm(forms.ModelForm):
         fields = ('onlyFor',)
         widgets = {'dataType': forms.TextInput,}
         labels = {
-            'onlyFor': 'Only For ?',
+            'onlyFor': 'Type',
         }
 
     def clean_goal(self):

@@ -7,7 +7,7 @@
     <label>Inputs: <small>(<a href="input/add">+</a>)</small></label>
     <ul>
         {% for input in service.inputs.all %}
-            <li>({{ input.list }}) <small>(<a href="input/remove/?id={{input.id}}">remove</a>)</small></li>
+            <li>({{ input.list }}) <small>(<a href="input/remove/?id={{input.id}}">X</a>)</small></li>
         {% endfor %}
     </ul>
     {{ form.as_p }}
@@ -21,7 +21,7 @@
                 <p>Rules: <small>(<a href="{{policy.id}}/purpose/add">+</a>)</small></p>
                 <ul>
                     {% for rule in policy.purpose.all %}
-                        <li> {{rule}} <small>(<a href="{{policy.id}}/purpose/remove/?id={{rule.id}}">remove</a>)</small></li>
+                        <li> {{rule}} <small>(<a href="{{policy.id}}/purpose/remove/?id={{rule.id}}">X</a>)</small></li>
                     {% endfor %}
                 </ul>
             </li>
@@ -36,7 +36,7 @@
                 <ul>
                     {% for expr in element.userRules.all %}
                         <li>
-                           {{expr}} <small>(<a href="{{element.id}}/user/expr/remove/?id={{expr.id}}">remove</a>)</small>
+                           {{expr}} <small>(<a href="{{element.id}}/user/expr/remove/?id={{expr.id}}">X</a>)</small>
                         </li>
                     {% endfor %}
                 </ul>
@@ -45,7 +45,7 @@
                     {% for expr in element.environmentRules.all %}
                         <li>
                            {{expr.variable}} {{expr.operator}} {{expr.value}}
-                        <small>(<a href="{{element.id}}/env/expr/remove/?id={{expr.id}}">remove</a>)</small>
+                        <small>(<a href="{{element.id}}/env/expr/remove/?id={{expr.id}}">X</a>)</small>
                         </li>
                     {% endfor %}
                 </ul>
