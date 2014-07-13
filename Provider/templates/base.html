@@ -1,0 +1,43 @@
+<html>
+<head>
+	<title>{%block title%}{%endblock%}</title>
+	<link rel="stylesheet" type="text/css" href="/static/css/base.css">
+	{%block styles %}
+
+	{%endblock%}
+	<script type="text/javascript" src="/static/js/jquery.js"></script>
+	<script src="/static/js/figlet.js"></script>
+	<script src="/static/js/jquery.figlet.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function(){
+			$('.figlet').each(function (ind, tag) {
+				var font = 'Small';
+				if ($(tag).attr("data-font")) {
+					font = $(tag).attr('data-font');
+				}
+				var pr = $('<pre>')
+				pr.figlet($(tag).text().trim(), font);
+				$(tag).html('');
+				$(tag).append(pr);
+			})
+		});
+	</script>
+	{%block scripts %}
+
+	{%endblock%}
+</head>
+<body>
+	<div class="container">
+		{%block head%}
+		<div class="figlet title" data-font="Graffiti">
+			{%block header%}{%endblock%}
+		</div>
+		{%endblock%}
+		<div class="content">
+		{%block content%}
+
+		{%endblock%}
+		</div>
+	</div>
+</body>
+</html>

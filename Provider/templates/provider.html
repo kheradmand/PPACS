@@ -1,10 +1,29 @@
+{% extends 'base.html'%}
+{%block head%}
+<div class="left title">
+	<div class="figlet main" data-font="Graffiti">
+		Provider
+	</div>
 
+	<div class="right">
+
+	</div>
+	<div class="cramp figlet sub" data-font="Larry 3D">
+		{{provider.id}}
+	</div>
+	<div class="figlet h3 right name">
+    	{{provider.name}}
+	</div>
+</div>
+{%endblock%}
 {% block content %}
-    <h2>Provider: {{provider.name}}</h2>
-     <h3>List of services: <small>(<a href="add">+</a>)</small> </h3>
-    <ul>
+	<div class="h3 cramp figlet inline" data-font="Small">
+		List of services:
+	</div>
+	<div class="inline add"><a href="add">(+)</a></div>
+    <ul class="list">
         {% for service in provider.service_set.all %}
-            <li><a href="{{service.id}}">{{ service.name }}</a> <small>(<a href="remove/?id={{service.id}}">remove</a>)</small></li>
+            <li><a href="{{service.id}}">{{ service.name }}</a> <small><a href="remove/?id={{service.id}}">(X)</a></small></li>
         {% endfor %}
     </ul>
 {% endblock %}
