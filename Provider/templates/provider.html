@@ -1,22 +1,7 @@
 {% extends 'base.html'%}
-{%block head%}
-<div class="left title">
-	<div class="figlet main" data-font="Graffiti">
-		Provider
-	</div>
 
-	<div class="right">
-
-	</div>
-	<div class="cramp figlet sub" data-font="Larry 3D">
-		{{provider.id}}
-	</div>
-	<div class="figlet h3 right name">
-    	{{provider.name}}
-	</div>
-</div>
-{%endblock%}
 {% block content %}
+    <h2>Provider: {{provider.name}}</h2>
 	<div class="h3 cramp figlet inline" data-font="Small">
 		List of services:
 	</div>

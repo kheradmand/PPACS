@@ -11,50 +11,41 @@
         {% endfor %}
     </ul>
     {{ form.as_p }}
-    <h3>Privacy Policy Rules: <small>(<a href="">+</a>)</small></h3>
+    <h3>Privacy Policy Rules: <small>(<a href="policy/add/">+</a>)</small></h3>
     <ul>
         {% for policy in service.service_privacy_policy_rule_set.all %}
             <li>
-                <small>(<a href="">remove</a>)</small>
+                <small>(<a href="policy/remove/?id={{policy.id}}">remove</a>)</small>
                 <p><label>Data:</label> {{policy.dataType.name}}</p>
                 <p><label>Time to live:</label> {{policy.ttl}}</p>
-                <p>Rules: <small>(<a href="">+</a>)</small></p>
+                <p>Rules: <small>(<a href="{{policy.id}}/purpose/add">+</a>)</small></p>
                 <ul>
                     {% for rule in policy.purpose.all %}
-                        <li>
-                            {% if rule.onlyFor == True %}
-                            Only
-                            {% else %}
-                            Not
-                            {% endif %}
-                            for {{rule.goal.name}}
-                        <small>(<a href="">remove</a>)</small>
-                        </li>
+                        <li> {{rule}} <small>(<a href="{{policy.id}}/purpose/remove/?id={{rule.id}}">remove</a>)</small></li>
                     {% endfor %}
                 </ul>
             </li>
         {% endfor %}
     </ul>
-    <h3>Access Control List: <small>(<a href="">+</a>)</small></h3>
+    <h3>Access Control List: <small>(<a href="element/add">+</a>)</small></h3>
     <ul>
         {% for element in service.access_control_element_set.all %}
             <li>
-                <small>(<a href="">remove</a>)</small>
-                <p>User: <small>(<a href="">+</a>)</small></p>
+                <small>(<a href="element/remove/?id={{element.id}}">remove</a>)</small>
+                <p>User: <small>(<a href="{{element.id}}/user/expr/add">+</a>)</small></p>
                 <ul>
                     {% for expr in element.userRules.all %}
                         <li>
-                           {{expr.variable}} {{expr.operator}} {{expr.value}}
-                        <small>(<a href="">remove</a>)</small>
+                           {{expr}} <small>(<a href="{{element.id}}/user/expr/remove/?id={{expr.id}}">remove</a>)</small>
                         </li>
                     {% endfor %}
                 </ul>
-                <p>Environment: <small>(<a href="">+</a>)</small></p>
+                <p>Environment: <small>(<a href="{{element.id}}/env/expr/add">+</a>)</small></p>
                 <ul>
                     {% for expr in element.environmentRules.all %}
                         <li>
                            {{expr.variable}} {{expr.operator}} {{expr.value}}
-                        <small>(<a href="">remove</a>)</small>
+                        <small>(<a href="{{element.id}}/env/expr/remove/?id={{expr.id}}">remove</a>)</small>
                         </li>
                     {% endfor %}
                 </ul>

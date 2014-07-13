@@ -43,8 +43,10 @@ body {
 	background-color: #eeeeee;
 }
 
+
 .form.table th{
 	text-align: right;
+	color: green;
 }
 
 .title {
@@ -112,4 +114,8 @@ body {
 
 .right {
 	float: right;
+}
+
+.errorlist {
+    color: red;
 }

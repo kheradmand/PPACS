@@ -15,7 +15,7 @@ class Expression(models.Model):
     value = models.CharField(max_length=100)
 
     def __unicode__(self):
-        return "Expression %d" % self.id
+        return "%s %s %s" % (self.variable, self.operator, self.value)
 
 class DataType(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -52,7 +52,7 @@ class Purpose(models.Model):
     onlyFor = models.BooleanField() #TODO: chage to choices
 
     def __unicode__(self):
-        return "Purpose %d" % self.id
+        return "%s for %s" % ("Only" if self.onlyFor == True else "Not", self.goal)
 
 
 class PrivacyPolicyBase(models.Model):
@@ -67,13 +67,13 @@ class ServicePrivacyPolicyRule(PrivacyPolicyBase):
     ttl = models.PositiveSmallIntegerField()
 
     def __unicode__(self):
-        return "ServicePolicy %d" % self.id
+        return "ServicePrivacyPolicy %d" % self.id
 
 class UserPrivacyPolicyRule(PrivacyPolicyBase):
     sensitivity = models.SmallIntegerField() #TODO: chage to choices
 
     def __unicode__(self):
-        return "UserPolicy %d" % self.id
+        return "UserPrivacyPolicy %d" % self.id
 
 class AccessControlElement(models.Model):
     userRules = models.ManyToManyField(Expression, related_name="user+")
