@@ -1,4 +1,3 @@
-from CodeWarrior.CodeWarrior_suite import target
 from django          import forms
 from Provider.models import Provider, Service, DataType, ServicePrivacyPolicyRule, Purpose, Goal, Expression, TypeList
 
