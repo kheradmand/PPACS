@@ -82,7 +82,7 @@ class Purpose(models.Model):
         (False, "Not For")
     )
     goal = models.ForeignKey(Goal)
-    onlyFor = models.BooleanField(choices=ONLY_FOR_CHOICES,default=True) #TODO: chage to choices
+    onlyFor = models.BooleanField(choices=ONLY_FOR_CHOICES,default=True)
 
     def __unicode__(self):
         return "%s for %s" % ("Only" if self.onlyFor == True else "Not", self.goal)
@@ -111,7 +111,7 @@ class UserPrivacyPolicyRule(PrivacyPolicyBase):
         (MEDIUM, "Medium"),
         (HIGH, "High"),
     )
-    sensitivity = models.SmallIntegerField() #TODO: chage to choices
+    sensitivity = models.SmallIntegerField()
 
     def __unicode__(self):
         return "UserPrivacyPolicy %d" % self.id
