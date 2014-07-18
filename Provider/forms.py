@@ -1,44 +1,64 @@
 from django          import forms
+from django.core.exceptions import ValidationError
+from django.forms.widgets import Textarea
 from Provider.models import Provider, Service, DataType, ServicePrivacyPolicyRule, Purpose, Goal, Expression, \
     TypeSet
+import re
+
+
+# cleaned data is a models.TypeSet object
+class TypeSetField(forms.Field):
+    def __init__(self, *args, **kwargs):
+        super(TypeSetField, self).__init__(*args, **kwargs)
+        self.initial = '{}'
+
+    def to_python(self, value):
+        striped = value.strip()
+        if striped[0] != '{' or striped[-1] != '}':
+            raise ValidationError(('set should start with { and end with }'))
+        striped = striped[1:-1]
+        splited = striped.split(',')
+        ret = []
+        if len(splited) == 0:
+            raise ValidationError(('set can not be empty'))
+        for val in splited:
+            striped = val.strip()
+            if re.match('[a-zA-Z0-9_]\w*',striped) is None:
+                raise ValidationError(('invalid type name: %(name)s'),
+                                     params={'name': striped}
+                )
+            ret.append(striped)
+        return ret
+
+    def clean(self, value):
+        cleaned = super(TypeSetField, self).clean(value)
+        set = TypeSet()
+        set.save()
+        for type in cleaned:
+            set.types.add(DataType.objects.get_or_create(name=type)[0])
+        set.save()
+        return set
+
 
 
 class ServiceForm(forms.ModelForm):
-    output = forms.CharField()
+    output = TypeSetField()
 
     def __init__(self, *args, **kwargs):
         super(ServiceForm, self).__init__(*args, **kwargs)
         try:
             self.fields['output'].initial = self.instance.output
         except:
-            self.fields['output'].initial = '{}'
+            pass
 
     class Meta:
         model = Service
         fields = ('name', 'function')
-        widgets = {'output': forms.TextInput,}
 
-    # def clean_output(self):
-    #     output = self.cleaned_data['output']
-    #     return TypeList.objects.get_or_create(list=output)[0]
-
-    def clean_output(self):
-        output = self.cleaned_data['output']
-        output = output[1:-1]
-        print ("output is now "+output)
-        set = TypeSet()
-        for type in output.split(', '):
-            print("adding "+type)
-            set.types.add(DataType.objects().get_or_create(name=type))
-            print("done")
-        set.save()
-        print("hehe")
-        return set
 
     def save(self, provider):
         service = super(ServiceForm, self).save(commit = False)
         service.provider = provider
-        #service.output = TypeList.objects.get_or_create(list=self.cleaned_data['output'])[0]
         service.output = self.cleaned_data['output']
         service.save()
         return service
@@ -59,26 +79,8 @@ class ProviderForm(forms.ModelForm):
 #         service.save()
 #         return list
 
-class TypeSetForm(forms.Form):
-    set = forms.CharField()
-
-    def __init__(self, *args, **kwargs):
-        super(TypeSetForm, self).__init__(*args, **kwargs)
-        try:
-            self.fields['set'].initial = '{}'
-        except:
-            pass
-
-    def clean_set(self):
-        set_str = self.cleaned_data['set']
-        set_str = set_str[1:-1]
-        print ("set_Str is now "+set_str)
-        set = TypeSet()
-        for type in set_str.split(', '):
-            print("adding "+type)
-            set.types.add(DataType.objects().get_or_create(name=type))
-        set.save()
-        return set
+class ServiceInputForm(forms.Form):
+    set = TypeSetField()
 
     def save(self, service):
         set = self.cleaned_data['set']

@@ -4,9 +4,10 @@ from django.shortcuts           import render, get_object_or_404, HttpResponseRe
 from django.forms               import *
 from django.http                import HttpResponse
 
-from Provider.models import Provider, Service, DataType, ServicePrivacyPolicyRule, Purpose, AccessControlElement,Expression
+from Provider.models import Provider, Service, DataType, ServicePrivacyPolicyRule, Purpose, AccessControlElement,Expression, \
+    TypeSet
 from Provider.forms  import ProviderForm, ServiceForm, PrivacyPolicyForm, PurposeForm, ExpressionForm, \
-    TypeSetForm
+    ServiceInputForm
 
 
 def index(request):
@@ -77,7 +78,7 @@ def service_index(request, provider_id, service_id):
 
 def input_add(request, provider_id, service_id):
     if request.method == 'POST':
-        form = TypeSetForm(request.POST)
+        form = ServiceInputForm(request.POST)
         try:
             service = Service.objects.get(pk=service_id)
         except Service.DoesNotExist:
@@ -87,15 +88,16 @@ def input_add(request, provider_id, service_id):
             form.save(service=service)
             return HttpResponseRedirect(reverse('service_index', kwargs={'provider_id': provider_id, 'service_id': service_id}))
     else:
-        form = TypeListForm()
+        form = ServiceInputForm()
     return render(request, 'add.html', {'form': form, 'cancel': reverse('service_index', kwargs={'provider_id': provider_id, 'service_id': service_id})})
 
 def input_remove(request, provider_id, service_id):
     if 'id' in request.GET.keys():
         id = request.GET['id']
         service = Service.objects.get(pk=service_id)
-        list = TypeList.objects.get(pk=id)
+        list = TypeSet.objects.get(pk=id)
         service.inputs.remove(list)
+        list.delete()
         service.save()
     return HttpResponseRedirect(reverse('service_index', kwargs={'provider_id': provider_id, 'service_id': service_id}))
 

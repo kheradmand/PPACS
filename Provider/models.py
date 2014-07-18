@@ -61,7 +61,7 @@ class TypeSet(models.Model):
     types = models.ManyToManyField(DataType)
 
     def __unicode__(self):
-        return '{%s}' % ', '.join([type in self.types.all()])
+        return '{%s}' % ', '.join(map(str, list(self.types.all())))
 
 
 class Service(models.Model):

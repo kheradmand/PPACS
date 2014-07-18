@@ -7,7 +7,7 @@
     <label>Inputs: <small>(<a href="input/add">+</a>)</small></label>
     <ul>
         {% for input in service.inputs.all %}
-            <li>({{ input.list }}) <small>(<a href="input/remove/?id={{input.id}}">X</a>)</small></li>
+            <li>{{ input }} <small>(<a href="input/remove/?id={{input.id}}">X</a>)</small></li>
         {% endfor %}
     </ul>
     {{ form.as_p }}
