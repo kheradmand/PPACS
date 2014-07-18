@@ -52,17 +52,23 @@ class Goal(models.Model):
     def __unicode__(self):
         return self.name
 
-class TypeList(models.Model): #TODO: refine
-    list = models.CharField(max_length=10000)
+#class TypeList(models.Model): #TODO: refine
+#    list = models.CharField(max_length=10000)
+#    def __unicode__(self):
+#        return self.list
+
+class TypeSet(models.Model):
+    types = models.ManyToManyField(DataType)
+
     def __unicode__(self):
-        return self.list
+        return '{%s}' % ', '.join([type in self.types.all()])
 
 
 class Service(models.Model):
     name = models.CharField(max_length=100)
     provider = models.ForeignKey(Provider)
-    inputs = models.ManyToManyField(TypeList, related_name="service_input_set")
-    output = models.ForeignKey(TypeList, related_name="service_output_set")
+    inputs = models.ManyToManyField(TypeSet, related_name="service_input_set")
+    output = models.ForeignKey(TypeSet, related_name="service_output_set")
     function = models.URLField(blank=True)
     #input
     #privacypolicyrule

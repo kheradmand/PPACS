@@ -4,9 +4,9 @@ from django.shortcuts           import render, get_object_or_404, HttpResponseRe
 from django.forms               import *
 from django.http                import HttpResponse
 
-from Provider.models import Provider, Service, DataType, ServicePrivacyPolicyRule, Purpose, AccessControlElement,Expression, \
-    TypeList
-from Provider.forms  import ProviderForm, ServiceForm, PrivacyPolicyForm, PurposeForm, ExpressionForm, TypeListForm
+from Provider.models import Provider, Service, DataType, ServicePrivacyPolicyRule, Purpose, AccessControlElement,Expression
+from Provider.forms  import ProviderForm, ServiceForm, PrivacyPolicyForm, PurposeForm, ExpressionForm, \
+    TypeSetForm
 
 
 def index(request):
@@ -77,7 +77,7 @@ def service_index(request, provider_id, service_id):
 
 def input_add(request, provider_id, service_id):
     if request.method == 'POST':
-        form = TypeListForm(request.POST)
+        form = TypeSetForm(request.POST)
         try:
             service = Service.objects.get(pk=service_id)
         except Service.DoesNotExist:
