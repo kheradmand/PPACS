@@ -8,5 +8,6 @@ urlpatterns = patterns('',
     # url(r'^$', 'PPACS.views.home', name='home'),
     # url(r'^blog/', include('blog.urls')),
     url(r'^provider/', include('Provider.urls')),
+    url(r'^repository/', include('Repository.urls')),
     url(r'^admin/', include(admin.site.urls)),
 )

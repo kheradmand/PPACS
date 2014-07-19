@@ -20,4 +20,6 @@ urlpatterns = patterns('',
     url(r'^(?P<provider_id>\w+)/(?P<service_id>\w+)/(?P<element_id>\w+)/(?P<target>(user)|(env))/expr/add/$', views.expr_add, name = 'expr_add'),
     url(r'^(?P<provider_id>\w+)/(?P<service_id>\w+)/(?P<element_id>\w+)/(?P<target>(user)|(env))/expr/remove/$', views.expr_remove, name = 'expr_remove'),
 
+    url(r'^(?P<provider_id>\w+)/(?P<service_id>\w+)/register$', views.service_register, name = 'service_register'),
+
 )

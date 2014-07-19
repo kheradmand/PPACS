@@ -7,7 +7,7 @@ from django.http                import HttpResponse
 from Provider.models import Provider, Service, DataType, ServicePrivacyPolicyRule, Purpose, AccessControlElement,Expression, \
     TypeSet
 from Provider.forms  import ProviderForm, ServiceForm, PrivacyPolicyForm, PurposeForm, ExpressionForm, \
-    ServiceInputForm
+    ServiceInputForm, ServiceRegisterForm
 
 
 def index(request):
@@ -104,17 +104,18 @@ def input_remove(request, provider_id, service_id):
 
 def policy_add(request, provider_id, service_id):
     if request.method == 'POST':
-        form = PrivacyPolicyForm(request.POST)
         try:
             service = Service.objects.get(pk=service_id)
         except Service.DoesNotExist:
             service = None
 
+        form = PrivacyPolicyForm(service, request.POST)
+
         if form.is_valid() and service:
-            form.save(service=service)
+            form.save()
             return HttpResponseRedirect(reverse('service_index', kwargs={'provider_id': provider_id, 'service_id': service_id}))
     else:
-        form = PrivacyPolicyForm()
+        form = PrivacyPolicyForm(Service.objects.get(pk=service_id))
     return render(request, 'add.html', {'form': form, 'cancel': reverse('service_index', kwargs={'provider_id': provider_id, 'service_id': service_id})})
 
 def policy_remove(request, provider_id, service_id):
@@ -184,3 +185,21 @@ def expr_remove(request, provider_id, service_id, element_id, target):
             element.environmentRules.remove(expr)
         element.save()
     return HttpResponseRedirect(reverse('service_index', kwargs={'provider_id': provider_id, 'service_id': service_id}))
+
+
+
+
+
+def service_register(request, provider_id, service_id):
+    provider = get_object_or_404(Provider, pk=provider_id)
+    service = get_object_or_404(Service, pk=service_id, provider__id=provider_id)
+    if request.method == "POST":
+        form = ServiceRegisterForm(request.POST, instance = service)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(reverse('service_index', kwargs={'provider_id': provider_id, 'service_id': service_id}))
+    else:
+        form = ServiceRegisterForm(instance = service)
+
+    return render(request, 'add.html', {'form': form, 'cancel': reverse('service_index', kwargs={'provider_id': provider_id, 'service_id': service_id})})
+

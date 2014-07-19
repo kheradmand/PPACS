@@ -1,3 +1,4 @@
+from sets import Set
 from django          import forms
 from django.core.exceptions import ValidationError
 from django.forms.widgets import Textarea
@@ -7,6 +8,9 @@ import re
 
 
 # cleaned data is a models.TypeSet object
+from Repository.models import Repository, Record
+
+
 class TypeSetField(forms.Field):
     def __init__(self, *args, **kwargs):
         super(TypeSetField, self).__init__(*args, **kwargs)
@@ -25,7 +29,7 @@ class TypeSetField(forms.Field):
             striped = val.strip()
             if re.match('[a-zA-Z0-9_]\w*',striped) is None:
                 raise ValidationError(('invalid type name: %(name)s'),
-                                     params={'name': striped}
+                                      params={'name': striped}
                 )
             ret.append(striped)
         return ret
@@ -63,7 +67,7 @@ class ServiceForm(forms.ModelForm):
         service.save()
         return service
 
-        
+
 class ProviderForm(forms.ModelForm):
     class Meta:
         model = Provider
@@ -89,31 +93,43 @@ class ServiceInputForm(forms.Form):
         return set
 
 class PrivacyPolicyForm(forms.ModelForm):
-    dataType = forms.CharField()
+    type = forms.ChoiceField()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, service, *args, **kwargs):
         super(PrivacyPolicyForm, self).__init__(*args, **kwargs)
+        self.service = service
+        unq = Set()
+        for set in service.inputs.all():
+            for type in set.types.all():
+                unq.add(type)
+        for type in service.output.types.all():
+            unq.add(type)
+        choices = []
+
+        for type in unq:
+            choices.append((type, str(type)))
+        print(choices)
+        self.fields['type'].choices = choices
         try:
-            self.fields['dataType'].initial = self.instance.dataType.name
+            self.fields['type'].initial = self.instance.dataType.name
         except:
             pass
 
     class Meta:
         model = ServicePrivacyPolicyRule
         fields = ('ttl',)
-        widgets = {'dataType': forms.TextInput,}
         labels = {
             'ttl': 'Time to live',
-        }
+            }
 
-    def clean_dataType(self):
-        name = self.cleaned_data['dataType']
+    def clean_type(self):
+        name = self.cleaned_data['type']
         return DataType.objects.get_or_create(name=name)[0]
 
-    def save(self, service):
+    def save(self):
         rule = super(PrivacyPolicyForm, self).save(commit = False)
-        rule.service = service
-        rule.dataType = self.cleaned_data['dataType']
+        rule.service = self.service
+        rule.dataType = self.cleaned_data['type']
         rule.save()
         return rule
 
@@ -133,11 +149,12 @@ class PurposeForm(forms.ModelForm):
         widgets = {'dataType': forms.TextInput,}
         labels = {
             'onlyFor': 'Type',
-        }
+            }
 
     def clean_goal(self):
         name = self.cleaned_data['goal']
         return Goal.objects.get_or_create(name=name)[0]
+
 
     def save(self, policy):
         rule = super(PurposeForm, self).save(commit = False)
@@ -159,3 +176,34 @@ class ExpressionForm(forms.ModelForm):
             element.environmentRules.add(expr)
         element.save()
         return expr
+
+
+class ServiceRegisterForm(forms.ModelForm):
+    repository = forms.ChoiceField()
+    mandatory_input = TypeSetField()
+    optional_input = TypeSetField()
+
+    def __init__(self, *args, **kwargs):
+        super(ServiceRegisterForm, self).__init__(*args, **kwargs)
+        choices = map(lambda x: (x, str(x)), Repository.objects.all())
+        self.fields['repository'].choices = choices
+    class Meta:
+        model = Service
+        fields = ()
+
+    def clean_repository(self):
+        repository = Repository.objects.get(name=self.cleaned_data['repository'])
+        if (repository.record_set.filter(service=self.instance)).exists():
+            raise ValidationError("already registered on this repository")
+        return repository
+
+    def save(self):
+        record = Record()
+        record.service = self.instance
+        record.repository = self.cleaned_data['repository']
+        record.reputation = 0
+        record.mandatory_input = self.cleaned_data['mandatory_input']
+        record.optional_input = self.cleaned_data['optional_input']
+        record.output = self.instance.output
+        record.save()
+        return record

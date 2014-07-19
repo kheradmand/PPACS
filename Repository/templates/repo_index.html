@@ -1,0 +1,16 @@
+{% extends 'base.html'%}
+
+{%block header%}Index{%endblock%}
+{%block content%}
+
+<div class="h3 cramp figlet inline" data-font="Small">
+	List of service repositories:
+</div>
+
+<div class="inline add"><a href="add">(+)</a></div>
+<ul class="list">
+    {% for repository in repository_list %}
+    <li><a href="{{repository.id}}">{{ repository.name }}</a> <small><a href="remove/?id={{repository.id}}">(X)</a></small> </li>
+    {% endfor %}
+</ul>
+{%endblock%}
