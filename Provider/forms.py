@@ -23,13 +23,17 @@ class TypeSetField(forms.Field):
         striped = striped[1:-1]
         splited = striped.split(',')
         ret = []
-        if len(splited) == 0:
-            raise ValidationError(('set can not be empty'))
+        if (len(splited) == 0 or not splited[0].strip()):
+            if self.required:
+                raise ValidationError(('set can not be empty'))
+            else:
+                return ret
+
         for val in splited:
             striped = val.strip()
             if re.match('[a-zA-Z0-9_]\w*',striped) is None:
-                raise ValidationError(('invalid type name: %(name)s'),
-                                      params={'name': striped}
+                raise ValidationError(('invalid type name: "%(name)s"'),
+                                          params={'name': striped}
                 )
             ret.append(striped)
         return ret
@@ -181,7 +185,7 @@ class ExpressionForm(forms.ModelForm):
 class ServiceRegisterForm(forms.ModelForm):
     repository = forms.ChoiceField()
     mandatory_input = TypeSetField()
-    optional_input = TypeSetField()
+    optional_input = TypeSetField(required=False)
 
     def __init__(self, *args, **kwargs):
         super(ServiceRegisterForm, self).__init__(*args, **kwargs)

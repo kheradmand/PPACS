@@ -20,7 +20,7 @@ def repository_add(request):
     else:
         form = RepositoryForm()
 
-    return render(request, 'add.html', {'form': form, 'cancel': reverse('index')})
+    return render(request, 'add.html', {'form': form, 'cancel': reverse('indexx')})
 
 def repository_remove(request):
     if 'id' in request.GET.keys():
