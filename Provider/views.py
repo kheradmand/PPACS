@@ -126,17 +126,16 @@ def policy_remove(request, provider_id, service_id):
 
 def purpose_add(request, provider_id, service_id, policy_id):
     if request.method == 'POST':
-        form = PurposeForm(request.POST)
         try:
             policy = ServicePrivacyPolicyRule.objects.get(pk=policy_id)
         except ServicePrivacyPolicyRule.DoesNotExist:
             policy = None
-
+        form = PurposeForm(policy, request.POST)
         if form.is_valid() and policy:
-            form.save(policy=policy)
+            form.save()
             return HttpResponseRedirect(reverse('service_index', kwargs={'provider_id': provider_id, 'service_id': service_id}))
     else:
-        form = PurposeForm()
+        form = PurposeForm(ServicePrivacyPolicyRule.objects.get(pk=policy_id))
     return render(request, 'add.html', {'form': form, 'cancel': reverse('service_index', kwargs={'provider_id': provider_id, 'service_id': service_id})})
 
 def purpose_remove(request, provider_id, service_id, policy_id):

@@ -23,7 +23,7 @@ class TypeSetField(forms.Field):
         striped = striped[1:-1]
         splited = striped.split(',')
         ret = []
-        if (len(splited) == 0 or not splited[0].strip()):
+        if len(splited) == 0 or not splited[0].strip():
             if self.required:
                 raise ValidationError(('set can not be empty'))
             else:
@@ -108,6 +108,9 @@ class PrivacyPolicyForm(forms.ModelForm):
                 unq.add(type)
         for type in service.output.types.all():
             unq.add(type)
+        #removing the ones that are currently added
+        for rule in service.service_privacy_policy_rule_set.all():
+            unq.remove(rule.dataType)
         choices = []
 
         for type in unq:
@@ -140,8 +143,9 @@ class PrivacyPolicyForm(forms.ModelForm):
 class PurposeForm(forms.ModelForm):
     goal = forms.CharField()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, policy, *args, **kwargs):
         super(PurposeForm, self).__init__(*args, **kwargs)
+        self.policy = policy
         try:
             self.fields['goal'].initial = self.instance.goal.name
         except:
@@ -150,22 +154,27 @@ class PurposeForm(forms.ModelForm):
     class Meta:
         model = Purpose
         fields = ('onlyFor',)
-        widgets = {'dataType': forms.TextInput,}
         labels = {
             'onlyFor': 'Type',
             }
 
     def clean_goal(self):
         name = self.cleaned_data['goal']
-        return Goal.objects.get_or_create(name=name)[0]
+        return  Goal.objects.get_or_create(name=name)[0]
+
+    def clean_onlyFor(self):
+        choice = self.cleaned_data['onlyFor']
+        if self.policy.purpose.filter().exists() and self.policy.purpose.all()[0].onlyFor != choice:
+            raise ValidationError(('all rules for this datatype should only be all OF or all NF'),)
+        return choice
 
 
-    def save(self, policy):
+    def save(self):
         rule = super(PurposeForm, self).save(commit = False)
         rule.goal = self.cleaned_data['goal']
         rule.save()
-        policy.purpose.add(rule)
-        policy.save()
+        self.policy.purpose.add(rule)
+        self.policy.save()
         return rule
 
 class ExpressionForm(forms.ModelForm):
