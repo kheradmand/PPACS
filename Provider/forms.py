@@ -23,7 +23,7 @@ class TypeSetField(forms.Field):
         striped = striped[1:-1]
         splited = striped.split(',')
         ret = []
-        if len(splited) == 0 or not splited[0].strip():
+        if len(splited) == 0 or (len(splited) == 1 and not splited[0].strip()):
             if self.required:
                 raise ValidationError(('set can not be empty'))
             else:
@@ -31,6 +31,8 @@ class TypeSetField(forms.Field):
 
         for val in splited:
             striped = val.strip()
+            if not striped:
+                continue
             if re.match('[a-zA-Z0-9_]\w*',striped) is None:
                 raise ValidationError(('invalid type name: "%(name)s"'),
                                           params={'name': striped}

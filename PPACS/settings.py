@@ -38,6 +38,8 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'Provider',
     'Repository',
+    'Blender',
+    'CredentialManager',
 )
 
 MIDDLEWARE_CLASSES = (

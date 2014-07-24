@@ -1,0 +1,17 @@
+{% extends 'base.html'%}
+{%block content%}
+<h2>User: {{user.id}} <small>(<a href="../">back</a>)</small></h2>
+<form action="" method="post">
+    {% csrf_token %}
+    <p><lable>Key:</lable> {{user.key}}</p>
+    <p><lable>Attributes: <small>(<a href="expr/add">+</a>)</small></lable></p>
+
+
+    <ul>
+        {% for expr in user.attributes.all %}
+            <li>{{ expr }} <small>(<a href="expr/remove/?id={{expr.id}}">X</a>)</small></li>
+        {% endfor %}
+    </ul>
+
+
+{%endblock%}

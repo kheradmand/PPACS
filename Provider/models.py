@@ -10,7 +10,7 @@ class Provider(models.Model):
 
 
 class Expression(models.Model):
-    EQUAL = '=='
+    EQUAL = '='
     NOT_EQUAL = '!='
     GREATER = '>'
     LESS = '<'
@@ -52,7 +52,7 @@ class Goal(models.Model):
     def __unicode__(self):
         return self.name
 
-#class TypeList(models.Model): #TODO: refine
+#class TypeList(models.Model):
 #    list = models.CharField(max_length=10000)
 #    def __unicode__(self):
 #        return self.list
