@@ -44,11 +44,11 @@ def blender_remove(request):
     return HttpResponseRedirect(reverse('blenders'))
 
 def blend(request, blender_id):
-    # if 'request_id' in request.GET.keys():
-    #     id = request.GET['id']
-    #     if not Request.objects.filter(id=id).exists():
-    #         return HttpResponseServerError(request)
-    #     rqst = get_object_or_404(Request, id=id)
+    if 'request_id' in request.GET.keys():
+        id = request.GET['id']
+        if not Request.objects.filter(id=id).exists():
+            return HttpResponseServerError(request)
+        rqst = get_object_or_404(Request, id=id)
 
 
 
