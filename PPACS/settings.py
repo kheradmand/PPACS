@@ -40,6 +40,7 @@ INSTALLED_APPS = (
     'Repository',
     'Blender',
     'CredentialManager',
+    'Client',
 )
 
 MIDDLEWARE_CLASSES = (

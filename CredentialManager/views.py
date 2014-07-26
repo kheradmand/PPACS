@@ -1,7 +1,8 @@
 import hashlib
 import random
+from json import dumps
 from django.core.urlresolvers import reverse
-from django.http.response import HttpResponseRedirect
+from django.http.response import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, get_object_or_404
 
 # Create your views here.
@@ -61,3 +62,21 @@ def expr_remove(request, user_id):
         user.attributes.remove(expr)
         user.save()
     return HttpResponseRedirect(reverse('user_index', kwargs={'user_id': user_id}))
+
+
+def certificate(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    data = {}
+    data['key'] = user.key
+    data['signature'] = ""
+    list = []
+    for attr in user.attributes.all():
+        list.append(
+            {'variable': attr.variable,
+             'operator': attr.operator,
+             'value': attr.value}
+        )
+    data['attributes'] = list
+    hash = hashlib.sha1(dumps(data, sort_keys=True, indent=4, separators=(',', ': '))).hexdigest()
+    data['signature'] = hash #TOOD: encrypt it
+    return HttpResponse(dumps(data, sort_keys=True, indent=4, separators=(',', ': ')), content_type="application/json")

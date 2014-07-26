@@ -11,6 +11,7 @@ urlpatterns = patterns('',
     url(r'^repository/', include('Repository.urls')),
     url(r'^credentials/', include('CredentialManager.urls')),
     url(r'^blender/', include('Blender.urls')),
+    url(r'^client/', include('Client.urls')),
     url(r'^admin/', include(admin.site.urls)),
 
 )

@@ -1,0 +1,56 @@
+{% extends 'base.html'%}
+{%block content%}
+{% if request.message_set.all|length > 0 %}
+        <ul>
+        {% for msg in request.message_set.all %}
+            <li class="{{msg.type}}">{{msg.msg}}</li>
+        {% endfor %}
+        </ul>
+{% endif %}
+<h2>Request Form</h2>
+<form action="" method="post">
+    {% csrf_token %}
+    <h3>General:</h3>
+    {{ form.as_p }}
+    <label>Inputs: <small>(<a href="input/add">+</a>)</small></label>
+    <ul>
+        {% for input in request.assignment_set.all %}
+            <li>{{ input }} <small>(<a href="input/remove/?id={{input.id}}">X</a>)</small></li>
+        {% endfor %}
+    </ul>
+    <h3>Privacy Preferences <small>(<a href="pref/add/">+</a>)</small></h3>
+    <ul>
+        {% for pref in request.userprivacyprefrule_set.all %}
+            <li>
+                <small>(<a href="pref/remove/?id={{pref.id}}">remove</a>)</small>
+                <p><label>Data:</label> {{pref.dataType.name}}</p>
+                <p><label>Sensitivity:</label> {{pref.sensitivity}}</p>
+                <p>Rules: <small>(<a href="pref/{{pref.id}}/purpose/add">+</a>)</small></p>
+                <ul>
+                    {% for rule in pref.purpose.all %}
+                        <li> {{rule}} <small>(<a href="pref/{{pref.id}}/purpose/remove/?id={{rule.id}}">X</a>)</small></li>
+                    {% endfor %}
+                </ul>
+            </li>
+        {% endfor %}
+    </ul>
+    <h3>User Purposes: <small>(<a href="purp/add/">+</a>)</small></h3>
+    <ul>
+        {% for purp in request.userprivacypolicyrule_set.all %}
+            <li>
+                <small>(<a href="purp/remove/?id={{purp.id}}">remove</a>)</small>
+                <p><label>Data:</label> {{purp.dataType.name}}</p>
+                <p>Rules: <small>(<a href="purp/{{purp.id}}/purpose/add">+</a>)</small></p>
+                <ul>
+                    {% for rule in purp.purpose.all %}
+                        <li> {{rule}} <small>(<a href="purp/{{purp.id}}/purpose/remove/?id={{rule.id}}">X</a>)</small></li>
+                    {% endfor %}
+                </ul>
+            </li>
+        {% endfor %}
+    </ul>
+    <input type="submit" value="Submit request" />
+    <a href="cancel"><input type="button" value="Cancel"></a>
+</form>
+
+{%endblock%}

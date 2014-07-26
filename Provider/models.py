@@ -108,19 +108,7 @@ class ServicePrivacyPolicyRule(PrivacyPolicyBase):
     def __unicode__(self):
         return "ServicePrivacyPolicy %d" % self.id
 
-class UserPrivacyPolicyRule(PrivacyPolicyBase):
-    LOW = 1
-    MEDIUM = 2
-    HIGH = 3
-    SENSITIVITY_CHOICES = (
-        (LOW, "Low"),
-        (MEDIUM, "Medium"),
-        (HIGH, "High"),
-    )
-    sensitivity = models.SmallIntegerField()
 
-    def __unicode__(self):
-        return "UserPrivacyPolicy %d" % self.id
 
 class AccessControlElement(models.Model):
     userRules = models.ManyToManyField(Expression, related_name="user+")

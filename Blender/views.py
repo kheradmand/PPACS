@@ -1,10 +1,11 @@
 from django.core.urlresolvers import reverse
-from django.http.response import HttpResponseRedirect
+from django.http.response import HttpResponseRedirect, HttpResponseServerError
 from django.shortcuts import render, get_object_or_404
 
 # Create your views here.
 from Blender.forms import BlenderForm
 from Blender.models import Blenderrr
+from Client.models import Request
 
 
 def index(request):
@@ -41,4 +42,15 @@ def blender_remove(request):
         blender = get_object_or_404(Blenderrr, id=id)
         blender.delete()
     return HttpResponseRedirect(reverse('blenders'))
+
+def blend(request, blender_id):
+    # if 'request_id' in request.GET.keys():
+    #     id = request.GET['id']
+    #     if not Request.objects.filter(id=id).exists():
+    #         return HttpResponseServerError(request)
+    #     rqst = get_object_or_404(Request, id=id)
+
+
+
+
 

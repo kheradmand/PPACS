@@ -129,3 +129,15 @@ td{
 .errorlist {
     color: red;
 }
+
+.error li{
+    color: red;
+}
+
+.warning li{
+    color: yellow;
+}
+
+.info li{
+    color: green;
+}

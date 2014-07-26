@@ -162,7 +162,10 @@ class PurposeForm(forms.ModelForm):
 
     def clean_goal(self):
         name = self.cleaned_data['goal']
-        return  Goal.objects.get_or_create(name=name)[0]
+        goal = Goal.objects.get_or_create(name=name)[0]
+        if self.policy.purpose.filter(goal=goal).exists():
+            raise ValidationError(('already have this one'),)
+        return goal
 
     def clean_onlyFor(self):
         choice = self.cleaned_data['onlyFor']
