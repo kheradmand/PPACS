@@ -2,7 +2,6 @@
 
 
 # cleaned data is a models.TypeSet object
-from sets import Set
 from django import forms
 from django.core.exceptions import ValidationError
 from Client.models import Request, Assignment, UserPrivacyPrefRule, UserPrivacyPolicyRule
@@ -64,7 +63,7 @@ class PrivacyForm(forms.ModelForm):
     type = forms.ChoiceField()
 
     def eligible_choice_set(self):
-        unq = Set()
+        unq = set()
         return unq
 
     def __init__(self, request, *args, **kwargs):
@@ -103,7 +102,7 @@ class PrivacyForm(forms.ModelForm):
 
 class PrivacyPrefForm(PrivacyForm):
     def eligible_choice_set(self):
-        unq = Set()
+        unq = set()
         for input in self.request.assignment_set.all():
             unq.add(input.variable)
         #removing the ones that are currently added
@@ -113,7 +112,7 @@ class PrivacyPrefForm(PrivacyForm):
 
 class PrivacyPurpForm(PrivacyForm):
     def eligible_choice_set(self):
-        unq = Set()
+        unq = set()
         for type in self.request.output.types.all():
             unq.add(type.name)
         #removing the ones that are currently added

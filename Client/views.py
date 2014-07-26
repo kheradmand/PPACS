@@ -26,8 +26,9 @@ def index(request, request_id):
         form = RequestForm(request.POST, instance=rqst)
         if form.is_valid():
             form.save()
-            #TODO: request to blender
-            #return HttpResponseRedirect(reverse('provider_index', kwargs={'provider_id': provider_id}))
+            #now submit the request to the blender
+            url = '%s?request_id=%d' % (reverse('blender_blend', kwargs={'blender_id': rqst.blender.id}), rqst.id)
+            return HttpResponseRedirect(url)
     else:
         form = RequestForm(instance=rqst)
     context = {'request': rqst, 'form': form,}

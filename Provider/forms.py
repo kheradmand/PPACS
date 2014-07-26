@@ -1,4 +1,3 @@
-from sets import Set
 from django          import forms
 from django.core.exceptions import ValidationError
 from django.forms.widgets import Textarea
@@ -104,7 +103,7 @@ class PrivacyPolicyForm(forms.ModelForm):
     def __init__(self, service, *args, **kwargs):
         super(PrivacyPolicyForm, self).__init__(*args, **kwargs)
         self.service = service
-        unq = Set()
+        unq = set()
         for set in service.inputs.all():
             for type in set.types.all():
                 unq.add(type)
