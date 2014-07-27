@@ -10,4 +10,5 @@ class BlenderForm(forms.ModelForm):
             'wm': "Medium sensitivity data weight",
             'wl': "Low sensitivity data weight",
             'repos': "Repositories",
+            'pref': "Privacy policy type preference"
         }

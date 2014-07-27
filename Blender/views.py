@@ -11,6 +11,9 @@ import sys
 from Blender.forms import BlenderForm
 from Blender.models import Blenderrr
 from Client.models import Request, Message, UserPrivacyPrefRule
+from PPACS import constraint
+from PPACS.constraint import ConstraintChecker
+from Provider.models import Purpose
 
 
 def index(request):
@@ -58,6 +61,12 @@ def blend(request, blender_id):
         if not Request.objects.filter(id=id).exists():
             return HttpResponseServerError(request)
         rqst = get_object_or_404(Request, id=id)
+
+        def chain_str(chain):
+            ret = ""
+            for service in chain:
+                ret += "%s::$s -> " % (service.provider.name, service.name)
+            return ret[:-4]
 
         def edit():
             return HttpResponseRedirect(reverse('request_index', kwargs={'request_id': rqst.id}))
@@ -164,7 +173,7 @@ def blend(request, blender_id):
         add_msg(Message.INFO, 'analysed %d service chains' % ((stats['failed']+stats['successful']),))
         add_msg(Message.INFO, '%d failed chains' % stats['failed'])
 
-        #check if there is any successful service_chain
+        #check whether there is any successful service_chain
         if stats['successful'] == 0:
             add_msg(Message.ERROR, "no service chain can satisfy the output need")
             if len(additional_need_set) > 0:
@@ -221,9 +230,192 @@ def blend(request, blender_id):
         add_msg(Message.INFO, msg % ('maximum', evaluated_chains[-1][0]))
 
 
+        #checking access control constraints
+        def check_access_control(service_chain, constraints_stack):
+            if len(service_chain) == 0:
+                try:
+                    checker = constraint.ConstraintChecker()
+                    for rule in constraints_stack:
+                        checker.add_constraint(rule)
+                except ConstraintChecker.Error:
+                    return False
+                return True
+            else:
+                service = service_chain[0]
+                for element in service.access_control_element_set.all():
+                    try:
+                        constraints = [ConstraintChecker.Constraint(expr.variable, expr.operator, expr.value)
+                        for expr in element.userRules.all()] + [ConstraintChecker.Constraint(expr.variable, expr.operator, expr.value)
+                        for expr in element.user.environmentRules.all()]
+                    except ConstraintChecker.Error:
+                        constraints = []
+                        continue
+                    constraints_stack.append(tuple(constraints))
+                    if check_access_control(service_chain[1:], constraints_stack):
+                        return True
+                    constraints_stack.pop()
+                return False
+
+        user_constraints = []
+        try:
+            for attr in data['attributes']:
+                user_constraints.append(ConstraintChecker.Constraint(attr['variable'], attr['operator'], attr['value']))
+        except ConstraintChecker.Error as error:
+            add_msg(Message.ERROR, 'error in user attributes: %s. please check your certificate' % str(error))
+        constraints_stack = [tuple(user_constraints)]
+
+        while len(evaluated_chains) > 0:
+            if check_access_control(evaluated_chains[0], constraints_stack):
+                print("this constraints stack was accepted %s", str(constraints_stack))
+                break
+            else:
+                add_msg(Message.WARNING,
+                        'service chain %s with leak value %d was rejected due to violation of access control rules' %
+                        (chain_str(evaluated_chains[0][1]), evaluated_chains[0][0])
+                        )
+                evaluated_chains.pop(0)
+
+        if len(evaluated_chains) == 0:
+            add_msg(Message.ERROR, "no service chain can process your request due to violation of "
+                                   "access control rules, use a different blender")
+            return edit()
 
 
+        add_msg(Message.INFO, 'service chain %s with leak value %d was accepted' %
+                (chain_str(evaluated_chains[0][1]), evaluated_chains[0][0])
+        )
 
+        selected_chain = evaluated_chains[0][1]
+
+        #blending service chain privacy policies
+        class Policy:
+            rules = {}
+
+            def get_types(self):
+                return self.rules.keys()
+
+            def add(self, rule):
+                var = rule.dataType.name
+                if rule.rule_type is None:
+                    return
+                if var in self.rules.keys():
+                    if self.rules[var]['type'] == rule.rule_type:
+                        if rule.rule_type == Purpose.ONLY_FOR:
+                            self.rules[var]['goals'] &= rule.goal_set()
+                        else:
+                            self.rules[var]['goals'] |= rule.goal_set()
+                    elif not self.rules[var]['goals'].isdisjoint(rule.goal_set()):
+                        if rule.rule_type == Purpose.ONLY_FOR:
+                           self.rules[var]['goals'] = rule.goal_set()
+                        else:
+                            pass
+                    else:
+                        if rule.rule_type == blender.pref:
+                            self.rules[var]['goals'] = rule.goal_set()
+                        else:
+                            pass
+                else:
+                    self.rules[var] = {'type': rule.rule_type(), 'goals': rule.goal_set()}
+
+            def get_type(self, var):
+                if var not in self.rules.keys() or len(self.rules[var]) == 0:
+                    return None
+                else:
+                    return self.rules[var]['type']
+
+            def get_set(self, var):
+                if var not in self.rules.keys() or len(self.rules[var]) == 0:
+                    return None
+                else:
+                    return self.rules[var]['goals']
+
+
+        ok = True
+        def check_policy(var, p1, p2, name1, name2, io, change_first):
+            t1 = p1.get_type(var)
+            t2 = p2.get_type(var)
+            s1 = p1.get_set(var)
+            s2 = p2.get_set(var)
+
+            def error(w1, w2):
+                ok = False
+                add_msg(Message.ERROR, "%s conflicts with %s on %s: %s" % (name1, name2, io, var))
+                if change_first:
+                    add_msg(Message.WARNING, 'try %s for %s: %s' % (w1, io, var))
+                else:
+                    add_msg(Message.WARNING, '%s for %s: %s' % (w2, io, var))
+
+
+            if t1 is None:
+                pass
+            elif t1 == Purpose.ONLY_FOR:
+                if t2 is None:
+                    error('removing only for %s from %s' % (s1, name1),
+                          'adding a subset of only for %s to %s' % (s1, name2)
+                    )
+                if t2 == Purpose.ONLY_FOR:
+                    if s1 >= s2:
+                        pass
+                    else:
+                        error('adding only for %s to %s' % (s2-s1, name1),
+                          'removing only for %s from %s' % (s2-s1, name2),
+                        )
+                else:
+                    error('removing only for %s from %s' % (s1, name1),
+                          'removing not for %s from %s AND adding a subset of only for %s to %s' % (s2, name2, s1, name2)
+                    )
+            else:
+                if t2 is None:
+                    error('removing only for %s from %s' % (s1, name1),
+                          'adding a only for a disjoint from %s to %s OR adding a superset of not for %s to %s' % (s1, name2, s1, name2),
+                    )
+                elif t2 == Purpose.ONLY_FOR:
+                    if s1.isdisjoint(s2):
+                        pass
+                    else:
+                       error('removing not for %s from %s' % (s1^s2, name1),
+                          'removing only for %s from %s' % (s1^s2, name2),
+                        )
+                else:
+                    if s1 <= s2:
+                        pass
+                    else:
+                        error('removing not for %s from %s' % (s1-s2, name1),
+                          'adding not for %s to %s' % (s1-s2, name2),
+                        )
+
+
+        service_chain_policy = Policy()
+        for service in selected_chain:
+            for rule in service.service_privacy_policy_rule_set.all():
+                service_chain_policy.add(rule)
+
+        user_policy = Policy()
+        for rule in rqst.userprivacyprefrule_set.all():
+            user_policy.add(rule)
+
+        for input in rqst.assignment_set.all():
+            check_policy(input.variable, user_policy, service_chain_policy,
+                         "user privacy preferences", "service chain privacy policy",
+                         "input", True)
+
+
+        user_policy = Policy()
+        for rule in rqst.userprivacypolicyrule_set.all():
+            user_policy.add(rule)
+
+        for output in rqst.output.types.all():
+            check_policy(output.name, service_chain_policy, user_policy,
+                         "service chain privacy policy", "user privacy policy"
+                         "output", False)
+
+        if not ok:
+            add_msg(Message.ERROR, "can not use the service chain due to conflicts between "
+                                   "service chain privacy policies and user privacy preferences and policies")
+            return edit()
+
+
+        #everything is ok just need confirmation
 
 
         #return HttpResponse(str(evaluated_chains))

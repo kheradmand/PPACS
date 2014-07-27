@@ -26,6 +26,15 @@ class RequestForm(forms.ModelForm):
             'certificate': 'Certificate URL'
         }
 
+    def clean_output(self):
+        output = self.cleaned_data['output']
+        if self.instance is not None:
+            input = set([x.variable for x in self.instance.assignment_set.all()])
+            output_str = set([x.name for x in output.types.all()])
+            if not output_str.isdisjoint(input()):
+                raise ValidationError("output set must be disjoint from input set")
+        return output
+
     def save(self):
         request = super(RequestForm, self).save(commit = False)
         request.output = self.cleaned_data['output']

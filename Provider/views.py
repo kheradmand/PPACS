@@ -77,18 +77,16 @@ def service_index(request, provider_id, service_id):
 
 
 def input_add(request, provider_id, service_id):
+    service = get_object_or_404(Service, id=service_id)
     if request.method == 'POST':
-        form = ServiceInputForm(request.POST)
-        try:
-            service = Service.objects.get(pk=service_id)
-        except Service.DoesNotExist:
-            service = None
+        form = ServiceInputForm(service, request.POST)
+
 
         if form.is_valid() and service:
-            form.save(service=service)
+            form.save()
             return HttpResponseRedirect(reverse('service_index', kwargs={'provider_id': provider_id, 'service_id': service_id}))
     else:
-        form = ServiceInputForm()
+        form = ServiceInputForm(service)
     return render(request, 'add.html', {'form': form, 'cancel': reverse('service_index', kwargs={'provider_id': provider_id, 'service_id': service_id})})
 
 def input_remove(request, provider_id, service_id):

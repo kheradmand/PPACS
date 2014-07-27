@@ -1,3 +1,4 @@
+from __builtin__ import set
 from django          import forms
 from django.core.exceptions import ValidationError
 from django.forms.widgets import Textarea
@@ -91,10 +92,20 @@ class ProviderForm(forms.ModelForm):
 class ServiceInputForm(forms.Form):
     set = TypeSetField()
 
-    def save(self, service):
+    def __init__(self,service, *args, **kwargs):
+        super(ServiceInputForm, self).__init__(*args, **kwargs)
+        self.service = service
+
+    def clean_set(self):
         set = self.cleaned_data['set']
-        service.inputs.add(set)
-        service.save()
+        if not set(set.types.all()).isdisjoint(self.service.output.types.all()):
+            raise ValidationError("input set must be disjoint from output set")
+        return set
+
+    def save(self):
+        set = self.cleaned_data['set']
+        self.service.inputs.add(set)
+        self.service.save()
         return set
 
 class PrivacyPolicyForm(forms.ModelForm):

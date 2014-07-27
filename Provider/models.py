@@ -100,9 +100,11 @@ class Service(models.Model):
 
 
 class Purpose(models.Model):
+    ONLY_FOR = True
+    NOT_FOR = False
     ONLY_FOR_CHOICES = (
-        (True, "Only for"),
-        (False, "Not For")
+        (ONLY_FOR, "Only for"),
+        (NOT_FOR, "Not For")
     )
     goal = models.ForeignKey(Goal)
     onlyFor = models.BooleanField(choices=ONLY_FOR_CHOICES,default=True)
@@ -114,6 +116,16 @@ class Purpose(models.Model):
 class PrivacyPolicyBase(models.Model):
     dataType = models.ForeignKey(DataType)
     purpose = models.ManyToManyField(Purpose)
+
+    def goal_set(self):
+        return set([x.goal.name for x in self.purpose.all()])
+
+    def rule_type(self):
+        if len(self.purpose.all()) == 0:
+            return  None
+        else:
+            return self.purpose.all()[0].onlyFor
+
     class Meta:
         abstract = True
 
