@@ -26,6 +26,8 @@ def index(request, request_id):
         form = RequestForm(request.POST, instance=rqst)
         if form.is_valid():
             form.save()
+            #clear messages
+            rqst.message_set.all().delete()
             #now submit the request to the blender
             url = '%s?request_id=%d' % (reverse('blender_blend', kwargs={'blender_id': rqst.blender.id}), rqst.id)
             return HttpResponseRedirect(url)

@@ -13,6 +13,13 @@ class Request(models.Model):
     blender = models.ForeignKey(Blenderrr)
     output = models.ForeignKey(TypeSet)
 
+    def get_sensitive_data(self, level):
+        ret = set()
+        for rule in self.userprivacyprefrule_set.filter(sensitivity=level):
+            ret.add(rule.dataType.name)
+        return ret
+
+
     def __unicode__(self):
         return "request #%d" % self.id
 

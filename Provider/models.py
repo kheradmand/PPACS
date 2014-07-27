@@ -77,6 +77,22 @@ class Service(models.Model):
     def __unicode__(self):
         return self.name
 
+    def outputs(self):
+        ret = set()
+        for output in self.output.types.all():
+            ret.add(output.name)
+        return ret
+
+    def inputs_set(self):
+        ret = set()
+        for inputs in self.inputs.all():
+            element = set()
+            for input in inputs.types.all():
+                element.add(input.name)
+            ret.add(frozenset(element))
+        return ret
+
+
     class Meta:
         unique_together = ('name', 'provider')
 
