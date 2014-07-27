@@ -17,6 +17,7 @@ class Expression(models.Model):
     GREATER_EQUAL = '>='
     LESS_EQUAL = '<='
     MEMBER = 'member of'
+    HAS_MEMBER = 'has the member'
     SUBSET = 'strict subset of'
     SUPERSET = 'strict superset of'
     SUBSET_EQUAL = 'subset of'

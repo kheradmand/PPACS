@@ -21,7 +21,7 @@ class TypeSetField(forms.Field):
             raise ValidationError(('set should start with { and end with }'))
         striped = striped[1:-1]
         splited = striped.split(',')
-        ret = []
+        ret = set()
         if len(splited) == 0 or (len(splited) == 1 and not splited[0].strip()):
             if self.required:
                 raise ValidationError(('set can not be empty'))
@@ -36,7 +36,7 @@ class TypeSetField(forms.Field):
                 raise ValidationError(('invalid type name: "%(name)s"'),
                                           params={'name': striped}
                 )
-            ret.append(striped)
+            ret.add(striped)
         return ret
 
     def clean(self, value):
