@@ -253,7 +253,7 @@ def blend(request, blender_id):
                     print("checking %s" % (constraints_stack))
                     checker = constraint.ConstraintChecker()
                     for rule in constraints_stack:
-                        checker.add_constraint(rule)
+                        checker.add_constraints(rule)
                 except ConstraintChecker.Error as e:
                     print(e)
                     return False

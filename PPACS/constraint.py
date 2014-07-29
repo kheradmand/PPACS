@@ -19,7 +19,7 @@ class ConstraintChecker:
         pass
 
     class Constraint:
-        def parse_set(value):
+        def parse_set(self, value):
             striped = value.strip()
             if striped[0] != '{' or striped[-1] != '}':
                 raise ValueError('set should start with { and end with }')
@@ -60,12 +60,11 @@ class ConstraintChecker:
 
 
 
-    environment = {}
 
     def __str__(self):
         ret = ""
         for x in self.environment.values():
-            ret = ret + '%s\n' % str(x)
+            ret += '%s\n' % str(x)
         return ret
 
     class Rangable:
@@ -90,7 +89,7 @@ class ConstraintChecker:
                 if (self.range_max < self.range_min) or \
                     (self.range_max == self.range_max and
                          (not self.max_include or not self.max_include or self.range_max in self.exclude)):
-                    raise ConstraintChecker.Error("%s constraint range is not possible", self.name)
+                    raise ConstraintChecker.Error("%s constraint range is not possible" % self.name)
 
                 # special care for int
                 if self.inferred is int:
@@ -106,21 +105,22 @@ class ConstraintChecker:
                             ok = True
                             break
                     if not ok:
-                       raise ConstraintChecker.Error("%s all values in the possible range are excluded", self.name)
+                       raise ConstraintChecker.Error("%s all values in the possible range are excluded" % self.name)
 
                 # special care for set
                 if self.inferred is set:
                     if self.range_max is not None:
                         if self.include > self.range_max:
-                            raise ConstraintChecker.Error("%s constraint range is not possible for this set", self.name)
+                            raise ConstraintChecker.Error("%s constraint range is not possible for this set" % self.name)
 
                 # special care for string
                 if self.inferred is str:
-                    if self.range_max is not None:
-                        if self.range_max not in self.incude:
-                            raise ConstraintChecker.Error("%s = %s but it should be in set %s",
-                                                          (self.name, self.range_max, str(self.include))
-                            )
+                    if self.include:
+                        if self.range_max is not None:
+                            if self.range_max not in self.include:
+                                raise ConstraintChecker.Error("%s = %s but it should be in set %s" %
+                                                              (self.name, self.range_max, str(self.include))
+                                )
 
 
         def check_type(self, val, supported):
@@ -133,7 +133,7 @@ class ConstraintChecker:
                 self.inferred = type(val)
 
         def set_max(self, val, inclusive=False):
-            supported = {int, float, set}
+            supported = {int, float, set, str}
             self.check_type(val, supported)
             if self.range_max is None:
                 self.range_max = val
@@ -147,7 +147,7 @@ class ConstraintChecker:
             self.check_range()
 
         def set_min(self, val, inclusive=False):
-            supported = {int, float, set}
+            supported = {int, float, set, str}
             self.check_type(val, supported)
             if self.range_min is None:
                 self.range_min = val
@@ -172,12 +172,14 @@ class ConstraintChecker:
 
         def set_equal(self, val):
             supported = {int, float, set, str}
-            self.check_type(val, supported)
-            self.range_max = val
-            self.range_min = val
-            self.max_include = True
-            self.min_include = True
-            self.check_range()
+            self.set_min(val, inclusive=True)
+            self.set_max(val, inclusive=True)
+            # self.check_type(val, supported)
+            # self.range_max = val
+            # self.range_min = val
+            # self.max_include = True
+            # self.min_include = True
+            # self.check_range()
 
         def add_member(self, val):
             supported = {set}
@@ -192,6 +194,8 @@ class ConstraintChecker:
             self.check_type("", supported)
             if type(val) is not set:
                 raise ConstraintChecker.Error("%s: only string sets are supported" % self.name)
+            if not val:
+                raise ConstraintChecker.Error("%s: constraint not satisfiable" % self.name)
             self.include |= val
             self.check_range()
 
@@ -201,6 +205,7 @@ class ConstraintChecker:
 
 
     def __init__(self):
+        self.environment = {}
         for x in ConstraintChecker.RESERVED:
             self.environment[x] = ConstraintChecker.Rangable(x)
         today = datetime.datetime.today()
@@ -244,9 +249,9 @@ class ConstraintChecker:
 
 
 
-    def add_constraint(self, constraint_set):
+    def add_constraints(self, constraint_set):
         for constraint in constraint_set:
-            self.add_constraint(constraint)
+            self.add_constraints(constraint)
 
 
 
