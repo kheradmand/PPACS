@@ -1,0 +1,16 @@
+{% extends 'base.html'%}
+{%block content%}
+{% if request.message_set.all|length > 0 %}
+        <ul>
+        {% for msg in request.message_set.all %}
+            <li class="{{msg.type}}">{{msg.msg}}</li>
+        {% endfor %}
+        </ul>
+{% endif %}
+<form action="" method="post">
+    <p>Do you want to proceed?</p>
+    <a href="{{proceed_link}}"><input type="button" value="Proceed"></a>
+    <a href="cancel"><input type="button" value="Cancel"></a>
+</form>
+
+{%endblock%}

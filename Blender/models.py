@@ -1,7 +1,7 @@
 from django.db import models
 
 # Create your models here.
-from Provider.models import Purpose
+from Provider.models import Purpose, Service
 from Repository.models import Repository
 
 

@@ -72,7 +72,7 @@ def service_index(request, provider_id, service_id):
             return HttpResponseRedirect(reverse('provider_index', kwargs={'provider_id': provider_id})) 
     else:
         form = ServiceForm(instance = service)
-        context = {'service': service, 'form': form,}
+    context = {'service': service, 'form': form,}
     return render(request, 'service.html', context)
 
 
@@ -156,18 +156,15 @@ def element_remove(request, provider_id, service_id):
     return HttpResponseRedirect(reverse('service_index', kwargs={'provider_id': provider_id, 'service_id': service_id}))
 
 def expr_add(request, provider_id, service_id, element_id, target):
+    element = get_object_or_404(AccessControlElement, id=element_id)
     if request.method == 'POST':
-        form = ExpressionForm(request.POST)
-        try:
-            element = AccessControlElement.objects.get(pk=element_id)
-        except AccessControlElement.DoesNotExist:
-            element = None
+        form = ExpressionForm(element, target, request.POST)
 
-        if form.is_valid() and element:
-            form.save(element, target)
+        if form.is_valid():
+            form.save()
             return HttpResponseRedirect(reverse('service_index', kwargs={'provider_id': provider_id, 'service_id': service_id}))
     else:
-        form = ExpressionForm()
+        form = ExpressionForm(element, target)
     return render(request, 'add.html', {'form': form, 'cancel': reverse('service_index', kwargs={'provider_id': provider_id, 'service_id': service_id})})
 
 

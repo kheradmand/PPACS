@@ -1,6 +1,7 @@
 import hashlib
 import json
 from json import dumps
+import traceback
 import urllib2
 from django.core.urlresolvers import reverse
 from django.http.response import HttpResponseRedirect, HttpResponseServerError, HttpResponse
@@ -10,7 +11,7 @@ from django.shortcuts import render, get_object_or_404
 import sys
 from Blender.forms import BlenderForm
 from Blender.models import Blenderrr
-from Client.models import Request, Message, UserPrivacyPrefRule
+from Client.models import Request, Message, UserPrivacyPrefRule, ChainElement
 from PPACS import constraint
 from PPACS.constraint import ConstraintChecker
 from Provider.models import Purpose
@@ -62,14 +63,20 @@ def blend(request, blender_id):
             return HttpResponseServerError(request)
         rqst = get_object_or_404(Request, id=id)
 
+
         def chain_str(chain):
             ret = ""
             for service in chain:
-                ret += "%s::$s -> " % (service.provider.name, service.name)
+                ret += "%s::%s -> " % (service.provider.name, service.name)
             return ret[:-4]
 
         def edit():
             return HttpResponseRedirect(reverse('request_index', kwargs={'request_id': rqst.id}))
+
+        def confirm():
+            return HttpResponseRedirect(reverse('request_confirm', kwargs={'request_id': rqst.id}))
+
+
         def add_msg(type, msg):
             message = Message()
             message.type = type
@@ -120,7 +127,7 @@ def blend(request, blender_id):
                     if new_need > the_need:
                         add_new_need = False
             if add_new_need:
-                new_set.add(new_need)
+                new_set.add(frozenset(new_need))
             additional_need_set[0] = new_set
 
 
@@ -176,13 +183,22 @@ def blend(request, blender_id):
         #check whether there is any successful service_chain
         if stats['successful'] == 0:
             add_msg(Message.ERROR, "no service chain can satisfy the output need")
-            if len(additional_need_set) > 0:
+            if len(additional_need_set[0]) > 0:
                 msg = "you can add one of the following input sets to your current input set " \
                       "in order to find service chains that can satisfy your output need: "
-                for need in additional_need_set:
-                    msg = msg + str(need) + " or "
-                msg = msg[:-4]
-                add_msg(Message.WARNING, msg)
+                count = 0
+                for ad_need in additional_need_set[0]:
+                    pure_need = ad_need - need
+                    if len(pure_need) > 0:
+                        count = count + 1
+                        msg = msg + repr(pure_need) + " or "
+
+                if (count > 0):
+                    msg = msg[:-4]
+                    add_msg(Message.WARNING, msg)
+                else:
+                    add_msg(Message.ERROR, "it is impossible to satisfy the request's output need, use a different blender")
+
             return edit()
         else:
             add_msg(Message.INFO, '%d successful chains (%d unique chains)' % (stats['successful'], len(service_chains)))
@@ -234,14 +250,18 @@ def blend(request, blender_id):
         def check_access_control(service_chain, constraints_stack):
             if len(service_chain) == 0:
                 try:
+                    print("checking %s" % (constraints_stack))
                     checker = constraint.ConstraintChecker()
                     for rule in constraints_stack:
                         checker.add_constraint(rule)
-                except ConstraintChecker.Error:
+                except ConstraintChecker.Error as e:
+                    print(e)
                     return False
                 return True
             else:
                 service = service_chain[0]
+                if len(service.access_control_element_set.all()) == 0:
+                    return check_access_control(service_chain[1:0], constraints_stack)
                 for element in service.access_control_element_set.all():
                     try:
                         constraints = [ConstraintChecker.Constraint(expr.variable, expr.operator, expr.value)
@@ -265,7 +285,7 @@ def blend(request, blender_id):
         constraints_stack = [tuple(user_constraints)]
 
         while len(evaluated_chains) > 0:
-            if check_access_control(evaluated_chains[0], constraints_stack):
+            if check_access_control(evaluated_chains[0][1], constraints_stack):
                 print("this constraints stack was accepted %s", str(constraints_stack))
                 break
             else:
@@ -406,7 +426,7 @@ def blend(request, blender_id):
 
         for output in rqst.output.types.all():
             check_policy(output.name, service_chain_policy, user_policy,
-                         "service chain privacy policy", "user privacy policy"
+                         "service chain privacy policy", "user privacy policy",
                          "output", False)
 
         if not ok:
@@ -415,11 +435,19 @@ def blend(request, blender_id):
             return edit()
 
 
+
         #everything is ok just need confirmation
+        add_msg(Message.INFO, "service chain %s is finally selected" % chain_str(selected_chain))
+        idx = 0
+        for service in selected_chain:
+            element = ChainElement()
+            element.index = idx
+            element.request = rqst
+            element.service = service
+            element.save()
+            idx += 1
 
-
-        #return HttpResponse(str(evaluated_chains))
-        return edit()
+        return confirm()
 
 
     else:
@@ -427,4 +455,16 @@ def blend(request, blender_id):
 
 
 
+
+def confirm(request, blender_id):
+    blender = get_object_or_404(Blenderrr, id=blender_id)
+    if 'request_id' in request.GET.keys():
+        rqst = get_object_or_404(Request, id=request.GET['request_id'])
+        if len(rqst.message_set.all()) == 0:
+            return HttpResponseServerError()
+        chain = [x.service for x in rqst.chainelement_set.order_by('index')]
+        rqst.delete()
+        return render(request, 'success.html', {'chain': chain})
+    else:
+        return HttpResponseRedirect(reverse('home'))
 

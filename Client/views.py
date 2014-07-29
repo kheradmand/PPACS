@@ -42,6 +42,15 @@ def cancel(request, request_id):
     rqst.delete()
     return HttpResponseRedirect(reverse('home'))
 
+def confirm(request, request_id):
+    rqst = get_object_or_404(Request, id=request_id)
+    if len(rqst.chainelement_set.all()) == 0:
+        return HttpResponseServerError()
+        rqst.delete()
+    url = '%s?request_id=%d' % (reverse('blender_confirm', kwargs={'blender_id': rqst.blender.id}), rqst.id)
+    context = {'request': rqst, 'proceed_link': url}
+    return render(request, 'confirm.html', context)
+
 def input_add(request, request_id):
     rqst = get_object_or_404(Request, id=request_id)
     if request.method == 'POST':

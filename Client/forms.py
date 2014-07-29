@@ -21,7 +21,7 @@ class RequestForm(forms.ModelForm):
 
     class Meta:
         model = Request
-        fields = ('key', 'certificate', 'blender')
+        fields = ('certificate', 'blender')
         labels = {
             'certificate': 'Certificate URL'
         }
@@ -31,7 +31,7 @@ class RequestForm(forms.ModelForm):
         if self.instance is not None:
             input = set([x.variable for x in self.instance.assignment_set.all()])
             output_str = set([x.name for x in output.types.all()])
-            if not output_str.isdisjoint(input()):
+            if not output_str.isdisjoint(input):
                 raise ValidationError("output set must be disjoint from input set")
         return output
 

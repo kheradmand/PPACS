@@ -1,12 +1,12 @@
 {% extends 'base.html'%}
 
 {%block content%}
-
+<p>(<a href="..">back</a>)</p>
 <div class="h3 cramp figlet inline" data-font="Small">
 	List of Blenders:
 </div>
-
 <div class="inline add"><a href="add">(+)</a></div>
+
 <ul class="list">
     {% for blender in blender_list %}
     <li><a href="{{blender.id}}">{{ blender }}</a> <small><a href="remove/?id={{blender.id}}">(X)</a></small> </li>

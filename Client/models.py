@@ -2,13 +2,10 @@ from django.db import models
 
 # Create your models here.
 from Blender.models import Blenderrr
-from Provider.models import TypeSet, PrivacyPolicyBase
-
-
+from Provider.models import TypeSet, PrivacyPolicyBase, Service
 
 
 class Request(models.Model):
-    key = models.CharField(max_length=1000)
     certificate = models.URLField()
     blender = models.ForeignKey(Blenderrr)
     output = models.ForeignKey(TypeSet)
@@ -22,6 +19,12 @@ class Request(models.Model):
 
     def __unicode__(self):
         return "request #%d" % self.id
+
+class ChainElement(models.Model):
+    index = models.PositiveSmallIntegerField()
+    service = models.ForeignKey(Service)
+    request = models.ForeignKey(Request)
+
 
 class Message(models.Model):
     ERROR = "Error"

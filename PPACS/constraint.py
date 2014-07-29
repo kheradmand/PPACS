@@ -62,6 +62,12 @@ class ConstraintChecker:
 
     environment = {}
 
+    def __str__(self):
+        ret = ""
+        for x in self.environment.values():
+            ret = ret + '%s\n' % str(x)
+        return ret
+
     class Rangable:
         name = ""
         range_max = None
@@ -71,6 +77,10 @@ class ConstraintChecker:
         inferred = None
         exclude = set()
         include = set()
+
+        def __str__(self):
+            return '%s %s:%s%s, %s%s-%s' % \
+            (self.inferred, self.name, '[' if self.min_include else '(', self.range_min, self.range_max, ']' if self.max_include else ')', self.exclude)
 
         def __init__(self, name):
             self.name = name
@@ -166,7 +176,7 @@ class ConstraintChecker:
             self.range_max = val
             self.range_min = val
             self.max_include = True
-            self.max_include = True
+            self.min_include = True
             self.check_range()
 
         def add_member(self, val):
@@ -190,10 +200,6 @@ class ConstraintChecker:
 
 
 
-
-
-
-
     def __init__(self):
         for x in ConstraintChecker.RESERVED:
             self.environment[x] = ConstraintChecker.Rangable(x)
@@ -204,8 +210,6 @@ class ConstraintChecker:
         self.environment['hour'].set_equal(today.hour)
         self.environment['minute'].set_equal(today.minute)
         self.environment['second'].set_equal(today.second)
-
-
 
 
 
@@ -235,6 +239,8 @@ class ConstraintChecker:
         else:
             raise Exception('should not be here! %s %s %s' %
                             (constraint.variable, constraint.operator, constraint.value))
+        print(self)
+
 
 
 

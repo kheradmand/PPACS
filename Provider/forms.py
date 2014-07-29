@@ -2,6 +2,7 @@ from __builtin__ import set
 from django          import forms
 from django.core.exceptions import ValidationError
 from django.forms.widgets import Textarea
+from PPACS import constraint
 from Provider.models import Provider, Service, DataType, ServicePrivacyPolicyRule, Purpose, Goal, Expression, \
     TypeSet
 import re
@@ -97,10 +98,10 @@ class ServiceInputForm(forms.Form):
         self.service = service
 
     def clean_set(self):
-        set = self.cleaned_data['set']
-        if not set(set.types.all()).isdisjoint(self.service.output.types.all()):
+        sett = self.cleaned_data['set']
+        if not set(sett.types.all()).isdisjoint(self.service.output.types.all()):
             raise ValidationError("input set must be disjoint from output set")
-        return set
+        return sett
 
     def save(self):
         set = self.cleaned_data['set']
@@ -115,8 +116,8 @@ class PrivacyPolicyForm(forms.ModelForm):
         super(PrivacyPolicyForm, self).__init__(*args, **kwargs)
         self.service = service
         unq = set()
-        for set in service.inputs.all():
-            for type in set.types.all():
+        for sett in service.inputs.all():
+            for type in sett.types.all():
                 unq.add(type)
         for type in service.output.types.all():
             unq.add(type)
@@ -193,16 +194,34 @@ class PurposeForm(forms.ModelForm):
         return rule
 
 class ExpressionForm(forms.ModelForm):
+
+    def __init__(self, element, target, *args, **kwargs):
+        super(ExpressionForm, self).__init__(*args, **kwargs)
+        self.element = element
+        self.target = target
+
     class Meta:
         model = Expression
-    def save(self, element, target):
+
+    def clean_variable(self):
+        var = self.cleaned_data['variable']
+        if self.target == 'user':
+            if var in constraint.ConstraintChecker.RESERVED:
+                raise ValidationError('%s is an environment variable, can not use it here' % var)
+        else:
+            if var not in constraint.ConstraintChecker.RESERVED:
+                raise ValidationError('%s is not an environment variable, can not use it here' % var)
+        return var
+
+
+    def save(self):
         expr = super(ExpressionForm, self).save(commit = False)
         expr.save()
-        if target == 'user':
-            element.userRules.add(expr)
+        if self.target == 'user':
+            self.element.userRules.add(expr)
         else:
-            element.environmentRules.add(expr)
-        element.save()
+            self.element.environmentRules.add(expr)
+        self.element.save()
         return expr
 
 

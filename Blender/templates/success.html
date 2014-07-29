@@ -1,0 +1,15 @@
+{% extends 'base.html'%}
+{%block content%}
+
+<form action="" method="post">
+    <p>Yeepee! Everything is all right! At this stage, you can assume that blender
+        has started sending appropriate requests to service providers for services in the following order:</p>
+    <ol>
+        {% for service in chain %}
+            <li>{{service.provider.name}}::{{service.name}}</li>
+        {% endfor %}
+    </ol>
+    <a href="{% url 'home' %}"><input type="button" value="OK"></a>
+</form>
+
+{%endblock%}

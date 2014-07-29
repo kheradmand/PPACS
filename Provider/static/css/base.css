@@ -130,14 +130,14 @@ td{
     color: red;
 }
 
-.error li{
+li.Error  {
     color: red;
 }
 
-.warning li{
+li.Warning  {
     color: yellow;
 }
 
-.info li{
+li.Info  {
     color: green;
 }
