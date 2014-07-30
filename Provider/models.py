@@ -30,9 +30,11 @@ class Expression(models.Model):
         (LESS, LESS),
         (LESS_EQUAL, LESS_EQUAL),
         (MEMBER, MEMBER),
+        (HAS_MEMBER, HAS_MEMBER),
         (SUBSET, SUBSET),
+        (SUPERSET, SUPERSET),
         (SUBSET_EQUAL, SUBSET_EQUAL),
-        (SUPERSET, SUPERSET_EQUAL),
+        (SUPERSET_EQUAL, SUPERSET_EQUAL),
     )
     variable = models.CharField(max_length=100)
     operator = models.CharField(max_length=20, choices=OPERATOR_CHOICES, default=EQUAL)

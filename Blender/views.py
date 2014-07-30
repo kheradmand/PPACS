@@ -393,8 +393,8 @@ def blend(request, blender_id):
                     if s1.isdisjoint(s2):
                         pass
                     else:
-                       error('removing not for %s from %s' % (s1^s2, name1),
-                          'removing only for %s from %s' % (s1^s2, name2),
+                       error('removing not for %s from %s' % (s1&s2, name1),
+                          'removing only for %s from %s' % (s1&s2, name2),
                         )
                 else:
                     if s1 <= s2:

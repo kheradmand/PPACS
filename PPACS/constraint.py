@@ -59,8 +59,6 @@ class ConstraintChecker:
                             self.value = value
 
 
-
-
     def __str__(self):
         ret = ""
         for x in self.environment.values():
@@ -68,21 +66,27 @@ class ConstraintChecker:
         return ret
 
     class Rangable:
-        name = ""
-        range_max = None
-        range_min = None
-        max_include = False
-        min_include = False
-        inferred = None
-        exclude = set()
-        include = set()
+
 
         def __str__(self):
-            return '%s %s:%s%s, %s%s-%s' % \
-            (self.inferred, self.name, '[' if self.min_include else '(', self.range_min, self.range_max, ']' if self.max_include else ')', self.exclude)
+            ret = ('%s %s:%s%s, %s%s-%s' % \
+            (self.inferred, self.name, '[' if self.min_include else '(', self.range_min, self.range_max, ']' if self.max_include else ')', self.exclude))
+            if self.include:
+                if self.inferred is str:
+                    ret += " in %s" % self.include
+                elif self.inferred is set:
+                    ret += " has %s" % self.include
+            return ret
 
         def __init__(self, name):
             self.name = name
+            self.range_max = None
+            self.range_min = None
+            self.max_include = False
+            self.min_include = False
+            self.inferred = None
+            self.exclude = set()
+            self.include = set()
 
         def check_range(self):
             if self.range_max is not None and self.range_min is not None:
@@ -194,9 +198,13 @@ class ConstraintChecker:
             self.check_type("", supported)
             if type(val) is not set:
                 raise ConstraintChecker.Error("%s: only string sets are supported" % self.name)
-            if not val:
+            if self.include:
+                self.include &= val
+            else:
+                self.include = val
+            if not self.include:
                 raise ConstraintChecker.Error("%s: constraint not satisfiable" % self.name)
-            self.include |= val
+
             self.check_range()
 
 
