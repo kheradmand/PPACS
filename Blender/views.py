@@ -162,9 +162,67 @@ def blend(request, blender_id):
         for output in rqst.output.types.all():
             need.add(output.name)
 
-        if len(need-have) == 0:
-            rqst.add_msg(Message.ERROR, "the output need is currently satisfied with input")
+        if len(need & have) != 0:
+            rqst.add_msg(Message.ERROR, "input and output sets must be disjoint")
             return edit()
+
+        if len(need) == 0:
+            rqst.add_msg(Message.ERROR, "the output need is currently satisfied")
+            return edit()
+
+
+        # check whether services and the request have fully defined privacy policies for their data usage
+        class PolicyCompletenessChecker:
+            @staticmethod
+            def check_service(rqst, service):
+                oks = set([])
+                for policy in service.service_privacy_policy_rule_set.all():
+                    if len(policy.purpose.all()) > 0:
+                        oks.add(policy.dataType)
+                not_oks = set([])
+                for input in service.inputs.all():
+                    for type in set(input.types.all())-not_oks:
+                        if type not in oks:
+                            rqst.add_msg(Message.WARNING, "service %s::%s have not defined privacy policy for input %s" % (
+                                service.name, service.provider.name, type.name
+                                                                                       ))
+                            not_oks.add(type)
+                if not_oks:
+                    return False
+                else:
+                    return True
+            @staticmethod
+            def clean_services(rqst, services):
+                ret = set([])
+                for service in services:
+                    if PolicyCompletenessChecker.check_service(rqst, service):
+                        ret.add(service)
+                    else:
+                        rqst.add_msg(Message.WARNING, "omitting service %s::%s due to the incompleteness of its privacy policies for its inputs" % (
+                                service.name, service.provider.name
+                                                                                       ))
+                return ret
+
+            @staticmethod
+            def check_request(rqst):
+                oks = set([])
+                for policy in rqst.userprivacypolicyrule_set.all():
+                    if len(policy.purpose.all()) > 0:
+                       oks.add(policy.dataType)
+                ret = True
+                for type in rqst.output.types.all():
+                    if type not in oks:
+                        rqst.add_msg(Message.WARNING, "request did not define any privacy policy for output %s" % type.name)
+                        ret = False
+                if not ret:
+                    rqst.add_msg(Message.ERROR, "can not process request due to incompleteness of its required outputs")
+                return ret
+
+
+        if not PolicyCompletenessChecker.check_request(rqst):
+            return edit()
+        services = PolicyCompletenessChecker.clean_services(rqst, services)
+
 
         #searching for all possible chains
         recurse([], have, need, services)
