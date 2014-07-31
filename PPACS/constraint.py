@@ -19,6 +19,10 @@ class ConstraintChecker:
         pass
 
     class Constraint:
+
+        def __str__(self):
+            return '%s %s %s' % (self.variable, self.operator, self.value)
+
         def parse_set(self, value):
             striped = value.strip()
             if striped[0] != '{' or striped[-1] != '}':
@@ -42,7 +46,7 @@ class ConstraintChecker:
             self.operator = operator
 
             if operator == Expression.HAS_MEMBER:
-                self.value = value
+                self.value = str(value)
             elif operator in \
                 (Expression.SUBSET, Expression.SUBSET_EQUAL, Expression.SUPERSET, Expression.SUPERSET_EQUAL, Expression.MEMBER):
                 self.value = self.parse_set(value)
@@ -56,7 +60,7 @@ class ConstraintChecker:
                         try:
                             self.value = self.parse_set(value)
                         except:
-                            self.value = value
+                            self.value = str(value)
 
 
     def __str__(self):
@@ -259,7 +263,8 @@ class ConstraintChecker:
 
     def add_constraints(self, constraint_set):
         for constraint in constraint_set:
-            self.add_constraints(constraint)
+            print('adding %s' % str(constraint))
+            self.add_constraint(constraint)
 
 
 

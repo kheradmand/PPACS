@@ -227,7 +227,7 @@ class ExpressionForm(forms.ModelForm):
 
 class ServiceRegisterForm(forms.ModelForm):
     repository = forms.ChoiceField()
-    mandatory_input = TypeSetField()
+    #mandatory_input = TypeSetField()
     optional_input = TypeSetField(required=False)
 
     def __init__(self, *args, **kwargs):
@@ -249,7 +249,7 @@ class ServiceRegisterForm(forms.ModelForm):
         record.service = self.instance
         record.repository = self.cleaned_data['repository']
         record.reputation = 0
-        record.mandatory_input = self.cleaned_data['mandatory_input']
+        #record.mandatory_input = self.cleaned_data['mandatory_input']
         record.optional_input = self.cleaned_data['optional_input']
         record.output = self.instance.output
         record.save()

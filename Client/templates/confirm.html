@@ -10,7 +10,7 @@
 <form action="" method="post">
     <p>Do you want to proceed?</p>
     <a href="{{proceed_link}}"><input type="button" value="Proceed"></a>
-    <a href="cancel"><input type="button" value="Cancel"></a>
+    <a href="{# cancel #}{% url 'request_index' request_id=request.id %}"><input type="button" value="{# Cancel #}Edit request"></a>
 </form>
 
 {%endblock%}

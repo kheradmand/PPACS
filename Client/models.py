@@ -16,6 +16,13 @@ class Request(models.Model):
             ret.add(rule.dataType.name)
         return ret
 
+    def add_msg(self, type, msg):
+        message = Message()
+        message.type = type
+        message.msg = msg
+        message.request = self
+        message.save()
+
 
     def __unicode__(self):
         return "request #%d" % self.id

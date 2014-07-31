@@ -1,7 +1,6 @@
 import hashlib
 import json
 from json import dumps
-import traceback
 import urllib2
 from django.core.urlresolvers import reverse
 from django.http.response import HttpResponseRedirect, HttpResponseServerError, HttpResponse
@@ -77,16 +76,11 @@ def blend(request, blender_id):
             return HttpResponseRedirect(reverse('request_confirm', kwargs={'request_id': rqst.id}))
 
 
-        def add_msg(type, msg):
-            message = Message()
-            message.type = type
-            message.msg = msg
-            message.request = rqst
-            message.save()
+
 
         #checking whether blender is correct
         if rqst.blender != blender:
-            add_msg(Message.ERROR, "this is a wrong blender!")
+            rqst.add_msg(Message.ERROR, "this is a wrong blender!")
             return edit()
 
         #loading credentials
@@ -94,7 +88,7 @@ def blend(request, blender_id):
             data = urllib2.urlopen(rqst.certificate).read()
             data = json.loads(data)
         except:
-            add_msg(MemoryError, "problem in loading credentials")
+            rqst.add_msg(MemoryError, "problem in loading credentials")
             return edit()
 
         #checking that the signature is correct
@@ -102,12 +96,12 @@ def blend(request, blender_id):
         data['signature'] = ""
         hash = hashlib.sha1(dumps(data, sort_keys=True, indent=4, separators=(',', ': '))).hexdigest()
         if signature != hash:
-            add_msg(Message.ERROR, "certificate is broken")
+            rqst.add_msg(Message.ERROR, "certificate is broken")
             return edit()
 
         #check whether at least one repository is registered
         if len(blender.repos.all()) == 0:
-            add_msg(Message.ERROR, "this blender has no registered repositories")
+            rqst.add_msg(Message.ERROR, "this blender has no registered repositories")
             return edit()
 
         ############ now get to work ############
@@ -169,7 +163,7 @@ def blend(request, blender_id):
             need.add(output.name)
 
         if len(need-have) == 0:
-            add_msg(Message.ERROR, "the output need is currently satisfied with input")
+            rqst.add_msg(Message.ERROR, "the output need is currently satisfied with input")
             return edit()
 
         #searching for all possible chains
@@ -177,12 +171,12 @@ def blend(request, blender_id):
 
 
 
-        add_msg(Message.INFO, 'analysed %d service chains' % ((stats['failed']+stats['successful']),))
-        add_msg(Message.INFO, '%d failed chains' % stats['failed'])
+        rqst.add_msg(Message.INFO, 'analysed %d service chains' % ((stats['failed']+stats['successful']),))
+        rqst.add_msg(Message.INFO, '%d failed chains' % stats['failed'])
 
         #check whether there is any successful service_chain
         if stats['successful'] == 0:
-            add_msg(Message.ERROR, "no service chain can satisfy the output need")
+            rqst.add_msg(Message.ERROR, "no service chain can satisfy the output need")
             if len(additional_need_set[0]) > 0:
                 msg = "you can add one of the following input sets to your current input set " \
                       "in order to find service chains that can satisfy your output need: "
@@ -195,13 +189,13 @@ def blend(request, blender_id):
 
                 if (count > 0):
                     msg = msg[:-4]
-                    add_msg(Message.WARNING, msg)
+                    rqst.add_msg(Message.WARNING, msg)
                 else:
-                    add_msg(Message.ERROR, "it is impossible to satisfy the request's output need, use a different blender")
+                    rqst.add_msg(Message.ERROR, "it is impossible to satisfy the request's output need, use a different blender")
 
             return edit()
         else:
-            add_msg(Message.INFO, '%d successful chains (%d unique chains)' % (stats['successful'], len(service_chains)))
+            rqst.add_msg(Message.INFO, '%d successful chains (%d unique chains)' % (stats['successful'], len(service_chains)))
 
 
         #evaluating the possible chains
@@ -242,15 +236,15 @@ def blend(request, blender_id):
 
         msg = '%s sensitive data leakage value ' \
               '(with the applied weights for various levels of sensitivity) is %d'
-        add_msg(Message.INFO, msg % ('minimum', evaluated_chains[0][0]))
-        add_msg(Message.INFO, msg % ('maximum', evaluated_chains[-1][0]))
+        rqst.add_msg(Message.INFO, msg % ('minimum', evaluated_chains[0][0]))
+        rqst.add_msg(Message.INFO, msg % ('maximum', evaluated_chains[-1][0]))
 
 
         #checking access control constraints
         def check_access_control(service_chain, constraints_stack):
             if len(service_chain) == 0:
                 try:
-                    print("checking %s" % (constraints_stack))
+                    print("checking %s" % str(constraints_stack))
                     checker = constraint.ConstraintChecker()
                     for rule in constraints_stack:
                         checker.add_constraints(rule)
@@ -266,7 +260,7 @@ def blend(request, blender_id):
                     try:
                         constraints = [ConstraintChecker.Constraint(expr.variable, expr.operator, expr.value)
                         for expr in element.userRules.all()] + [ConstraintChecker.Constraint(expr.variable, expr.operator, expr.value)
-                        for expr in element.user.environmentRules.all()]
+                        for expr in element.environmentRules.all()]
                     except ConstraintChecker.Error:
                         constraints = []
                         continue
@@ -281,7 +275,7 @@ def blend(request, blender_id):
             for attr in data['attributes']:
                 user_constraints.append(ConstraintChecker.Constraint(attr['variable'], attr['operator'], attr['value']))
         except ConstraintChecker.Error as error:
-            add_msg(Message.ERROR, 'error in user attributes: %s. please check your certificate' % str(error))
+            rqst.add_msg(Message.ERROR, 'error in user attributes: %s. please check your certificate' % str(error))
         constraints_stack = [tuple(user_constraints)]
 
         while len(evaluated_chains) > 0:
@@ -289,19 +283,19 @@ def blend(request, blender_id):
                 print("this constraints stack was accepted %s", str(constraints_stack))
                 break
             else:
-                add_msg(Message.WARNING,
+                rqst.add_msg(Message.WARNING,
                         'service chain %s with leak value %d was rejected due to violation of access control rules' %
                         (chain_str(evaluated_chains[0][1]), evaluated_chains[0][0])
                         )
                 evaluated_chains.pop(0)
 
         if len(evaluated_chains) == 0:
-            add_msg(Message.ERROR, "no service chain can process your request due to violation of "
+            rqst.add_msg(Message.ERROR, "no service chain can process your request due to violation of "
                                    "access control rules, use a different blender")
             return edit()
 
 
-        add_msg(Message.INFO, 'service chain %s with leak value %d was accepted' %
+        rqst.add_msg(Message.INFO, 'chose service chain %s with leak value %d' %
                 (chain_str(evaluated_chains[0][1]), evaluated_chains[0][0])
         )
 
@@ -309,7 +303,12 @@ def blend(request, blender_id):
 
         #blending service chain privacy policies
         class Policy:
-            rules = {}
+
+            def __init__(self):
+                self.rules = {}
+
+            def __str__(self):
+                return str(self.rules)
 
             def get_types(self):
                 return self.rules.keys()
@@ -350,58 +349,59 @@ def blend(request, blender_id):
                     return self.rules[var]['goals']
 
 
-        ok = True
+        ok = [True]
         def check_policy(var, p1, p2, name1, name2, io, change_first):
             t1 = p1.get_type(var)
             t2 = p2.get_type(var)
             s1 = p1.get_set(var)
             s2 = p2.get_set(var)
 
-            def error(w1, w2):
-                ok = False
-                add_msg(Message.ERROR, "%s conflicts with %s on %s: %s" % (name1, name2, io, var))
+            def error(id1, w1, id2, w2):
+                ok[0] = False
+                rqst.add_msg(Message.ERROR, "%s conflicts with %s on %s: %s (error #%d)" %
+                             (name1, name2, io, var, id1 if change_first else id2))
                 if change_first:
-                    add_msg(Message.WARNING, 'try %s for %s: %s' % (w1, io, var))
+                    rqst.add_msg(Message.WARNING, 'try %s for %s: %s' % (w1, io, var))
                 else:
-                    add_msg(Message.WARNING, '%s for %s: %s' % (w2, io, var))
+                    rqst.add_msg(Message.WARNING, 'try %s for %s: %s' % (w2, io, var))
 
 
             if t1 is None:
                 pass
             elif t1 == Purpose.ONLY_FOR:
                 if t2 is None:
-                    error('removing only for %s from %s' % (s1, name1),
-                          'adding a subset of only for %s to %s' % (s1, name2)
+                    error(1,'removing only for %s from %s' % (s1, name1),
+                          7, 'adding a subset of only for %s to %s' % (s1, name2)
                     )
-                if t2 == Purpose.ONLY_FOR:
+                elif t2 == Purpose.ONLY_FOR:
                     if s1 >= s2:
                         pass
                     else:
-                        error('adding only for %s to %s' % (s2-s1, name1),
-                          'removing only for %s from %s' % (s2-s1, name2),
+                        error(2,'adding a subset of only for %s to %s' % (s2-s1, name1, s1-s2, name2),
+                          8, 'removing only for %s from %s' % (s2-s1, name2, s1-s2, name2),
                         )
                 else:
-                    error('removing only for %s from %s' % (s1, name1),
-                          'removing not for %s from %s AND adding a subset of only for %s to %s' % (s2, name2, s1, name2)
+                    error(3, 'removing only for %s from %s' % (s1, name1),
+                          9, 'removing not for %s from %s and adding a subset of only for %s to %s' % (s2, name2, s1, name2)
                     )
             else:
                 if t2 is None:
-                    error('removing only for %s from %s' % (s1, name1),
-                          'adding a only for a disjoint from %s to %s OR adding a superset of not for %s to %s' % (s1, name2, s1, name2),
+                    error(4, 'removing only for %s from %s' % (s1, name1),
+                          10, 'adding an only for a disjoint from %s to %s OR adding a superset of not for %s to %s' % (s1, name2, s1, name2),
                     )
                 elif t2 == Purpose.ONLY_FOR:
                     if s1.isdisjoint(s2):
                         pass
                     else:
-                       error('removing not for %s from %s' % (s1&s2, name1),
-                          'removing only for %s from %s' % (s1&s2, name2),
+                       error(5,'removing not for %s from %s' % (s1&s2, name1),
+                          11, 'removing only for %s from %s' % (s1&s2, name2),
                         )
                 else:
                     if s1 <= s2:
                         pass
                     else:
-                        error('removing not for %s from %s' % (s1-s2, name1),
-                          'adding not for %s to %s' % (s1-s2, name2),
+                        error(6, 'removing not for %s from %s' % (s1-s2, name1),
+                          12, 'adding not for %s to %s' % (s1-s2, name2),
                         )
 
 
@@ -429,15 +429,15 @@ def blend(request, blender_id):
                          "service chain privacy policy", "user privacy policy",
                          "output", False)
 
-        if not ok:
-            add_msg(Message.ERROR, "can not use the service chain due to conflicts between "
+        if not ok[0]:
+            rqst.add_msg(Message.ERROR, "can not use the service chain due to conflicts between "
                                    "service chain privacy policies and user privacy preferences and policies")
             return edit()
 
 
 
         #everything is ok just need confirmation
-        add_msg(Message.INFO, "service chain %s is finally selected" % chain_str(selected_chain))
+        rqst.add_msg(Message.INFO, "service chain %s was finally accepted" % chain_str(selected_chain))
         idx = 0
         for service in selected_chain:
             element = ChainElement()

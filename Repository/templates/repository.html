@@ -18,7 +18,12 @@
                     {% endif %}
                     <td>{{record.service.provider}}</td>
                     <td>{{record.reputation}}</td>
-                    <th>{{record.mandatory_input}}</th>
+                    {# <th>{{record.mandatory_input}}</th> #}
+                    <th>
+                        {% for input in record.service.inputs.all %}
+                            {{input}}
+                        {% endfor %}
+                    </th>
                     <th>{{record.optional_input}}</th>
                     <th>{{record.output}}</th>
                     <th><small>(<a href="record/remove/?id={{record.id}}">X</a>)</small></th>
