@@ -463,6 +463,7 @@ def confirm(request, blender_id):
         if len(rqst.message_set.all()) == 0:
             return HttpResponseServerError()
         chain = [x.service for x in rqst.chainelement_set.order_by('index')]
+        rqst.chainelement_set.all().delete()
         rqst.delete()
         return render(request, 'success.html', {'chain': chain})
     else:
