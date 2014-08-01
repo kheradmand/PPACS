@@ -88,7 +88,7 @@ def blend(request, blender_id):
             data = urllib2.urlopen(rqst.certificate).read()
             data = json.loads(data)
         except:
-            rqst.add_msg(MemoryError, "problem in loading credentials")
+            rqst.add_msg(Message.ERROR, "problem in loading credentials")
             return edit()
 
         #checking that the signature is correct
