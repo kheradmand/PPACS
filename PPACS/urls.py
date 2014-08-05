@@ -6,6 +6,7 @@ admin.autodiscover()
 urlpatterns = patterns('',
     # Examples:
     url(r'^$', 'PPACS.views.home', name='home'),
+    url(r'^log/$', 'PPACS.views.log', name='log'),
     # url(r'^blog/', include('blog.urls')),
     url(r'^provider/', include('Provider.urls')),
     url(r'^repository/', include('Repository.urls')),
