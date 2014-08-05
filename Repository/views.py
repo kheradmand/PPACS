@@ -45,7 +45,12 @@ def repository_index(request, repository_id):
 def record_remove(request, repository_id):
     if 'id' in request.GET.keys():
         pid = request.GET['id']
-        Record.objects.get(pk=pid).delete()
+        record = Record.objects.get(pk=pid)
+        service = record.service
+        record.delete()
+        if 'return' in request.GET.keys():
+            if request.GET['return'] == 'service':
+                return HttpResponseRedirect(reverse('service_index', kwargs={'provider_id': service.provider.id, 'service_id': service.id}))
     return HttpResponseRedirect(reverse('repository_index', kwargs={'repository_id': repository_id}))
 
 

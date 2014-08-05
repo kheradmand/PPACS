@@ -52,8 +52,17 @@
             </li>
         {% endfor %}
     </ul>
+    <h3>Repositories: <small>(<a href="register">+</a>)</small></h3>
+    <ul>
+        {% for record in service.record_set.all %}
+            <li>
+                <a href="{% url 'repository_index' repository_id=record.repository.id %}">{{record.repository.name}}</a>
+                <small>(<a href="{% url 'record_remove' repository_id=record.repository.id %}?id={{record.id}}&return=service">X</a>)</small>
+            </li>
+        {% endfor %}
+    </ul>
+
     <input type="submit" value="Save changes" />
-    <a href="register"><input type="button" value="Register on a Service Repository"></a>
 </form>
 
 {%endblock%}

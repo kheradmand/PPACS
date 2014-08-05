@@ -9,7 +9,7 @@
         <th>Mandatory Input</th>
         <th>Optional Input</th>
         <th>Output</th>
-        <th></th>
+        {# <th></th> #}
         {% for service, record_set in records.items %}
             {% for record in record_set %}
                 <tr>
@@ -26,7 +26,7 @@
                     </th>
                     <th>{{record.optional_input}}</th>
                     <th>{{record.output}}</th>
-                    <th><small>(<a href="record/remove/?id={{record.id}}">X</a>)</small></th>
+                    {# <th><small>(<a href="record/remove/?id={{record.id}}">X</a>)</small></th> #}
                 </tr>
             {% endfor %}
 
