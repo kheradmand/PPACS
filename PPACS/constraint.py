@@ -227,13 +227,13 @@ class ConstraintChecker:
         self.environment['hour'].set_equal(today.hour)
         self.environment['minute'].set_equal(today.minute)
         self.environment['second'].set_equal(today.second)
-        self.environment['day name'].is_member(set[
+        self.environment['day name'].is_member(set([
             'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
-        ])
-        self.environment['month name'].is_member(set[
+        ]))
+        self.environment['month name'].is_member(set([
             'January', 'February', 'March', 'April', 'May', 'June',
             'July', 'August', 'September', 'October', 'November', 'December'
-        ])
+        ]))
 
 
     def add_constraint(self, constraint):
