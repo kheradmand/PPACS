@@ -135,7 +135,7 @@ def blend(request, blender_id):
                 return
             failed = True
             for service in services:
-                if not need.isdisjoint(service.outputs()):
+                if not pure_need.isdisjoint(service.outputs()):
                     failed = False
                     for inputs in service.inputs_set():
                         new_have = have | service.outputs()

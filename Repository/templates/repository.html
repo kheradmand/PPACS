@@ -3,13 +3,15 @@
 {% block content %}
     <h2>Repository: {{repository.name}} <small>(<a href="../">back</a>)</small></h2>
     <table border="1" width="900px">
-        <th>Service</th>
-        <th>Provider</th>
-        <th>Reputation</th>
-        <th>Mandatory Input</th>
-        <th>Optional Input</th>
-        <th>Output</th>
-        {# <th></th> #}
+        <tr>
+            <th>Service</th>
+            <th>Provider</th>
+            <th>Reputation</th>
+            <th>Mandatory Input</th>
+            <th>Optional Input</th>
+            <th>Output</th>
+            {# <th></th> #}
+        </tr>
         {% for service, record_set in records.items %}
             {% for record in record_set %}
                 <tr>

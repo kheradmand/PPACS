@@ -19,6 +19,7 @@
         {% endfor %}
     </ul>
     <h3>Privacy Preferences <small>(<a href="pref/add/">+</a>)</small></h3>
+
     <ul>
         {% for pref in request.userprivacyprefrule_set.all %}
             <li>
@@ -34,6 +35,33 @@
             </li>
         {% endfor %}
     </ul>
+
+    {% comment %}
+    <table class="privacy">
+        <tr>
+            <th></th>
+            <th>Data</th>
+            <th>Sensitivity</th>
+            <th>Rules</th>
+        </tr>
+        {% for pref in request.userprivacyprefrule_set.all %}
+            <tr>
+                <td><small>(<a href="pref/remove/?id={{pref.id}}">remove</a>)</small></td>
+                <td>{{pref.dataType.name}}</td>
+                <td>{{pref.sensitivity}}</td>
+                <td>
+
+                    <ul>
+                        <li><small>(<a href="pref/{{pref.id}}/purpose/add">+</a>)</small></li>
+                        {% for rule in pref.purpose.all %}
+                            <li> {{rule}} <small>(<a href="pref/{{pref.id}}/purpose/remove/?id={{rule.id}}">X</a>)</small></li>
+                        {% endfor %}
+                    </ul>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+    {% endcomment %}
     <h3>User Purposes: <small>(<a href="purp/add/">+</a>)</small></h3>
     <ul>
         {% for purp in request.userprivacypolicyrule_set.all %}
