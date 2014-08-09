@@ -423,43 +423,50 @@ def blend(request, blender_id):
                 else:
                     rqst.add_msg(Message.WARNING, 'try %s for %s: %s' % (w2, io, var))
 
+            def beau(s):
+                ret = "{"
+                for x in s:
+                    ret += str(x)+', '
+                ret = ret[:-2]
+                ret += "}"
+                return ret
 
             if t1 is None:
                 pass
             elif t1 == Purpose.ONLY_FOR:
                 if t2 is None:
-                    error(1,'removing only for %s from %s' % (s1, name1),
-                          7, 'adding a subset of only for %s to %s' % (s1, name2)
+                    error(1,'removing only for %s from %s' % (beau(s1), name1),
+                          7, 'adding a subset of only for %s to %s' % (beau(s1), name2)
                     )
                 elif t2 == Purpose.ONLY_FOR:
                     if s1 >= s2:
                         pass
                     else:
-                        error(2,'adding a subset of only for %s to %s' % (s2-s1, name1, s1-s2, name2),
-                          8, 'removing only for %s from %s' % (s2-s1, name2, s1-s2, name2),
+                        error(2,'adding a subset of only for %s to %s' % (beau(s2-s1), name1, (s1-s2), name2),
+                          8, 'removing only for %s from %s' % (beau(s2-s1), name2, beau(s1-s2), name2),
                         )
                 else:
-                    error(3, 'removing only for %s from %s' % (s1, name1),
-                          9, 'removing not for %s from %s and adding a subset of only for %s to %s' % (s2, name2, s1, name2)
+                    error(3, 'removing only for %s from %s' % (beau(s1), name1),
+                          9, 'removing not for %s from %s and adding a subset of only for %s to %s' % (beau(s2), name2, beau(s1), name2)
                     )
             else:
                 if t2 is None:
-                    error(4, 'removing only for %s from %s' % (s1, name1),
-                          10, 'adding an only for a disjoint from %s to %s OR adding a superset of not for %s to %s' % (s1, name2, s1, name2),
+                    error(4, 'removing only for %s from %s' % (beau(s1), name1),
+                          10, 'adding an only for a disjoint from %s to %s OR adding a superset of not for %s to %s' % (beau(s1), name2, beau(s1), name2),
                     )
                 elif t2 == Purpose.ONLY_FOR:
                     if s1.isdisjoint(s2):
                         pass
                     else:
-                       error(5,'removing not for %s from %s' % (s1&s2, name1),
-                          11, 'removing only for %s from %s' % (s1&s2, name2),
+                       error(5,'removing not for %s from %s' % (beau(s1&s2), name1),
+                          11, 'removing only for %s from %s' % (beau(s1&s2), name2),
                         )
                 else:
                     if s1 <= s2:
                         pass
                     else:
-                        error(6, 'removing not for %s from %s' % (s1-s2, name1),
-                          12, 'adding not for %s to %s' % (s1-s2, name2),
+                        error(6, 'removing not for %s from %s' % (beau(s1-s2), name1),
+                          12, 'adding not for %s to %s' % (beau(s1-s2), name2),
                         )
 
 
