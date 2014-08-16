@@ -345,7 +345,7 @@ def blend(request, blender_id):
 
         while len(evaluated_chains) > 0:
             if check_access_control(evaluated_chains[0][1], constraints_stack):
-                print("this constraints stack was accepted %s", str(constraints_stack))
+                print("this constraints stack was accepted %s" % str(constraints_stack))
                 break
             else:
                 rqst.add_msg(Message.WARNING,
@@ -442,9 +442,20 @@ def blend(request, blender_id):
                 pass
             elif t1 == Purpose.ONLY_FOR:
                 if t2 is None:
-                    error(1,'removing only for %s from %s' % (beau(s1), name1),
-                          7, 'adding a subset of only for %s to %s' % (beau(s1), name2)
-                    )
+
+                    if (change_first):
+                        #because we first check for policy completeness for input of services,
+                        #t2 being None only can mean that the service chain does not use that input at all
+                        #so it is OK
+                        pass
+                    else:
+                        #beause we first check for policy completeness for desired output,
+                        #it can not reach here
+                        return HttpResponseServerError(request)
+
+                    #error(1,'removing only for %s from %s' % (beau(s1), name1),
+                    #      7, 'adding a subset of only for %s to %s' % (beau(s1), name2)
+                    #)
                 elif t2 == Purpose.ONLY_FOR:
                     if s1 >= s2:
                         pass
@@ -458,9 +469,19 @@ def blend(request, blender_id):
                     )
             else:
                 if t2 is None:
-                    error(4, 'removing only for %s from %s' % (beau(s1), name1),
-                          10, 'adding an only for a disjoint from %s to %s OR adding a superset of not for %s to %s' % (beau(s1), name2, beau(s1), name2),
-                    )
+                    if (change_first):
+                        #because we first check for policy completeness for input of services,
+                        #t2 being None only can mean that the service chain does not use that input at all
+                        #so it is OK
+                        pass
+                    else:
+                        #beause we first check for policy completeness for desired output,
+                        #it can not reach here
+                        return HttpResponseServerError(request)
+                        
+                    #error(4, 'removing only for %s from %s' % (beau(s1), name1),
+                    #      10, 'adding an only for a disjoint from %s to %s OR adding a superset of not for %s to %s' % (beau(s1), name2, beau(s1), name2),
+                    #)
                 elif t2 == Purpose.ONLY_FOR:
                     if s1.isdisjoint(s2):
                         pass
