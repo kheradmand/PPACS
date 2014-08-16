@@ -2,6 +2,7 @@ import hashlib
 import json
 from json import dumps
 import urllib2
+import datetime
 from django.core.urlresolvers import reverse
 from django.http.response import HttpResponseRedirect, HttpResponseServerError, HttpResponse
 from django.shortcuts import render, get_object_or_404
@@ -54,7 +55,7 @@ def blender_remove(request):
 
 
 def blend(request, blender_id):
-
+    start_time = datetime.datetime.now()
     blender = get_object_or_404(Blenderrr, id=blender_id)
     if 'request_id' in request.GET.keys():
         id = request.GET['request_id']
@@ -69,10 +70,16 @@ def blend(request, blender_id):
                 ret += "%s::%s -> " % (service.provider.name, service.name)
             return ret[:-4]
 
+        def add_time():
+            elapsed = datetime.datetime.now() - start_time
+            rqst.add_msg(Message.INFO, "response was generated in %f seconds" % elapsed.total_seconds())
+
         def edit():
+            add_time()
             return HttpResponseRedirect(reverse('request_index', kwargs={'request_id': rqst.id}))
 
         def confirm():
+            add_time()
             return HttpResponseRedirect(reverse('request_confirm', kwargs={'request_id': rqst.id}))
 
 
@@ -419,9 +426,9 @@ def blend(request, blender_id):
                 rqst.add_msg(Message.ERROR, "%s conflicts with %s on %s: %s (error #%d)" %
                              (name1, name2, io, var, id1 if change_first else id2))
                 if change_first:
-                    rqst.add_msg(Message.WARNING, 'try %s for %s: %s' % (w1, io, var))
+                    rqst.add_msg(Message.WARNING, 'Blender suggestion: try %s for %s: %s' % (w1, io, var))
                 else:
-                    rqst.add_msg(Message.WARNING, 'try %s for %s: %s' % (w2, io, var))
+                    rqst.add_msg(Message.WARNING, 'Blender suggestion: try %s for %s: %s' % (w2, io, var))
 
             def beau(s):
                 ret = "{"
@@ -497,6 +504,8 @@ def blend(request, blender_id):
         if not ok[0]:
             rqst.add_msg(Message.ERROR, "can not use the service chain due to conflicts between "
                                    "service chain privacy policies and user privacy preferences and policies")
+            rqst.add_msg(Message.WARNING, "Suggestion: you may also use a different blender instead of changing your"
+                                          " privacy policies and preferences")
             return edit()
 
 
