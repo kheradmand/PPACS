@@ -76,10 +76,12 @@ def blend(request, blender_id):
 
         def edit():
             add_time()
+            rqst.save()
             return HttpResponseRedirect(reverse('request_index', kwargs={'request_id': rqst.id}))
 
         def confirm():
             add_time()
+            rqst.save()
             return HttpResponseRedirect(reverse('request_confirm', kwargs={'request_id': rqst.id}))
 
 
@@ -144,13 +146,22 @@ def blend(request, blender_id):
             for service in services:
                 if not pure_need.isdisjoint(service.outputs()):
                     failed = False
-                    for inputs in service.inputs_set():
+                    if len(service.inputs_set()) > 0:
+                        for inputs in service.inputs_set():
+                            new_have = have | service.outputs()
+                            new_need = need | inputs
+                            new_services = services - {service}
+                            chain.append(service)
+                            recurse(chain, new_have, new_need, new_services)
+                            chain.pop()
+                    else:
                         new_have = have | service.outputs()
-                        new_need = need | inputs
+                        new_need = need | set([])
                         new_services = services - {service}
                         chain.append(service)
                         recurse(chain, new_have, new_need, new_services)
                         chain.pop()
+
             if failed:
                 stats['failed'] += 1
                 add_additional_need(pure_need)
@@ -231,6 +242,7 @@ def blend(request, blender_id):
         services = PolicyCompletenessChecker.clean_services(rqst, services)
 
 
+        print('blender started blending services with services %s' % services)
         #searching for all possible chains
         recurse([], have, need, services)
 
@@ -256,7 +268,7 @@ def blend(request, blender_id):
                     msg = msg[:-4]
                     rqst.add_msg(Message.WARNING, msg)
                 else:
-                    rqst.add_msg(Message.ERROR, "it is impossible to satisfy the request's output need, use a different blender")
+                    rqst.add_msg(Message.ERROR, "it is impossible to satisfy the request's output need, Please use a different blender")
 
             return edit()
         else:
@@ -276,16 +288,26 @@ def blend(request, blender_id):
             )
             for service in chain:
                 min_leak = (sys.maxint, sys.maxint, sys.maxint, sys.maxint)
-                for input in service.inputs_set():
-                    if input <= current_have:
-                        min_leak = min(min_leak,
-                                       (
-                                            len((input | service.outputs()) & sensitive_data[0]),
-                                            len((input | service.outputs()) & sensitive_data[1]),
-                                            len((input | service.outputs()) & sensitive_data[2]),
-                                            len(input),
-                                       ),
-                        )
+                if len(service.inputs_set()) > 0:
+                    for input in service.inputs_set():
+                        if input <= current_have:
+                            min_leak = min(min_leak,
+                                           (
+                                                len((input | service.outputs()) & sensitive_data[0]),
+                                                len((input | service.outputs()) & sensitive_data[1]),
+                                                len((input | service.outputs()) & sensitive_data[2]),
+                                                len(input),
+                                           ),
+                            )
+                else:
+                   min_leak = min(min_leak,
+                                           (
+                                                len((service.outputs()) & sensitive_data[0]),
+                                                len((service.outputs()) & sensitive_data[1]),
+                                                len((service.outputs()) & sensitive_data[2]),
+                                                0,
+                                           ),
+                            )
                 if min_leak == (sys.maxint, sys.maxint, sys.maxint, sys.maxint):
                     raise Exception('the service chain is invalid')
                 current_have |= service.outputs()
@@ -343,22 +365,32 @@ def blend(request, blender_id):
             rqst.add_msg(Message.ERROR, 'error in user attributes: %s. please check your certificate' % str(error))
         constraints_stack = [tuple(user_constraints)]
 
+        count = 0
+        print 'must skip %s chains' % rqst.skip_chains
         while len(evaluated_chains) > 0:
             if check_access_control(evaluated_chains[0][1], constraints_stack):
                 print("this constraints stack was accepted %s" % str(constraints_stack))
-                break
+                if count < rqst.skip_chains:
+                    count += 1
+                    print("but we skip this one as user has requested")
+                    rqst.add_msg(Message.INFO, "# skipping %s as user demanded" % chain_str(evaluated_chains[0][1]))
+                else:
+                    break
             else:
                 rqst.add_msg(Message.WARNING,
                         'service chain %s with leak value %d was rejected due to violation of access control rules' %
                         (chain_str(evaluated_chains[0][1]), evaluated_chains[0][0])
                         )
-                evaluated_chains.pop(0)
+            evaluated_chains.pop(0)
 
         if len(evaluated_chains) == 0:
-            rqst.add_msg(Message.ERROR, "no service chain can process your request due to violation of "
-                                   "access control rules, use a different blender")
+            rqst.add_msg(Message.ERROR, "no service chain can process your request. This may be due to violation of "
+                                   "access control rules or skipping all feasible service chains. use a different blender")
+            rqst.no_chains_left = True
             return edit()
 
+        rqst.no_chains_left = False
+        print "setting request no chains lef to ", rqst.no_chains_left, rqst.id
 
         rqst.add_msg(Message.INFO, 'chose service chain %s with leak value %d' %
                 (chain_str(evaluated_chains[0][1]), evaluated_chains[0][0])
@@ -443,7 +475,7 @@ def blend(request, blender_id):
             elif t1 == Purpose.ONLY_FOR:
                 if t2 is None:
 
-                    if (change_first):
+                    if change_first:
                         #because we first check for policy completeness for input of services,
                         #t2 being None only can mean that the service chain does not use that input at all
                         #so it is OK
@@ -469,7 +501,7 @@ def blend(request, blender_id):
                     )
             else:
                 if t2 is None:
-                    if (change_first):
+                    if change_first:
                         #because we first check for policy completeness for input of services,
                         #t2 being None only can mean that the service chain does not use that input at all
                         #so it is OK
@@ -478,7 +510,7 @@ def blend(request, blender_id):
                         #beause we first check for policy completeness for desired output,
                         #it can not reach here
                         return HttpResponseServerError(request)
-                        
+
                     #error(4, 'removing only for %s from %s' % (beau(s1), name1),
                     #      10, 'adding an only for a disjoint from %s to %s OR adding a superset of not for %s to %s' % (beau(s1), name2, beau(s1), name2),
                     #)
@@ -503,9 +535,13 @@ def blend(request, blender_id):
             for rule in service.service_privacy_policy_rule_set.all():
                 service_chain_policy.add(rule)
 
+        print("service chain policies %s" % str(service_chain_policy))
+
         user_policy = Policy()
         for rule in rqst.userprivacyprefrule_set.all():
             user_policy.add(rule)
+
+        print("user preferences %s " % str(user_policy))
 
         for input in rqst.assignment_set.all():
             check_policy(input.variable, user_policy, service_chain_policy,
@@ -517,6 +553,8 @@ def blend(request, blender_id):
         for rule in rqst.userprivacypolicyrule_set.all():
             user_policy.add(rule)
 
+        print("user policies %s " % str(user_policy))
+
         for output in rqst.output.types.all():
             check_policy(output.name, service_chain_policy, user_policy,
                          "service chain privacy policy", "user privacy policy",
@@ -525,8 +563,10 @@ def blend(request, blender_id):
         if not ok[0]:
             rqst.add_msg(Message.ERROR, "can not use the service chain due to conflicts between "
                                    "service chain privacy policies and user privacy preferences and policies")
-            rqst.add_msg(Message.WARNING, "Suggestion: you may also use a different blender instead of changing your"
+            rqst.add_msg(Message.WARNING, "Suggestion: you may also make blender use another service chain instead of changing your"
                                           " privacy policies and preferences")
+
+
             return edit()
 
 
@@ -541,6 +581,7 @@ def blend(request, blender_id):
             element.service = service
             element.save()
             idx += 1
+
 
         return confirm()
 

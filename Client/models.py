@@ -9,6 +9,8 @@ class Request(models.Model):
     certificate = models.URLField()
     blender = models.ForeignKey(Blenderrr)
     output = models.ForeignKey(TypeSet)
+    skip_chains = models.PositiveIntegerField(default=0)
+    no_chains_left = models.BooleanField(default=True) #before producing any chains, there is no chains left !
 
     def get_sensitive_data(self, level):
         ret = set()
@@ -22,6 +24,14 @@ class Request(models.Model):
         message.msg = msg
         message.request = self
         message.save()
+
+
+    def clear(self, all=True):
+        self.message_set.all().delete()
+        self.chainelement_set.all().delete()
+        if all:
+            self.skip_chains = 0
+            self.no_chains_left = True #before producing any chains, there is no chains left !
 
 
     def __unicode__(self):

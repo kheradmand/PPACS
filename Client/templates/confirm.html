@@ -7,6 +7,11 @@
         {% endfor %}
         </ul>
 {% endif %}
+{% if not request.no_chains_left %}
+    <form action="" method="post">
+         <a href="next_chain"><input type="button" value="Use another service chain"></a>
+    </form>
+{% endif %}
 <form action="" method="post">
     <p>Do you want to proceed?</p>
     <a href="{{proceed_link}}"><input type="button" value="Proceed"></a>

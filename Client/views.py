@@ -22,18 +22,20 @@ def new(request):
 
 def index(request, request_id):
     rqst = get_object_or_404(Request, id=request_id)
+
     if request.method == "POST":
         form = RequestForm(request.POST, instance=rqst)
         if form.is_valid():
             form.save()
             #clear request
-            rqst.message_set.all().delete()
-            rqst.chainelement_set.all().delete()
+            rqst.clear()
+            rqst.save()
             #now submit the request to the blender
             url = '%s?request_id=%d' % (reverse('blender_blend', kwargs={'blender_id': rqst.blender.id}), rqst.id)
             return HttpResponseRedirect(url)
     else:
         form = RequestForm(instance=rqst)
+
     context = {'request': rqst, 'form': form,}
     return render(request, 'client.html', context)
 
@@ -42,6 +44,17 @@ def cancel(request, request_id):
     rqst = get_object_or_404(Request, id=request_id)
     rqst.delete()
     return HttpResponseRedirect(reverse('home'))
+
+def next_chain(request, request_id):
+    rqst = get_object_or_404(Request, id=request_id)
+    if rqst.no_chains_left:
+        return HttpResponseServerError()
+    rqst.clear(False)
+    rqst.skip_chains += 1
+    rqst.save()
+    url = '%s?request_id=%d' % (reverse('blender_blend', kwargs={'blender_id': rqst.blender.id}), rqst.id)
+    return HttpResponseRedirect(url)
+
 
 def confirm(request, request_id):
     rqst = get_object_or_404(Request, id=request_id)
