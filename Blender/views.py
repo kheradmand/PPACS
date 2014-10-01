@@ -241,13 +241,12 @@ def blend(request, blender_id):
             return edit()
         services = PolicyCompletenessChecker.clean_services(rqst, services)
 
-
+        temp_time = datetime.datetime.now()
         print('blender started blending services with services %s' % services)
         #searching for all possible chains
         recurse([], have, need, services)
 
-
-
+        rqst.add_msg(Message.INFO, 'service blending took %d seconds' % ((datetime.datetime.now()-temp_time).total_seconds()))
         rqst.add_msg(Message.INFO, 'analysed %d service chains' % ((stats['failed']+stats['successful']),))
         rqst.add_msg(Message.INFO, '%d failed chains' % stats['failed'])
 
@@ -316,10 +315,13 @@ def blend(request, blender_id):
             print('eval is %s' % str(leak))
             return leak[0]*blender.wh+leak[1]*blender.wm+leak[2]*blender.wl
 
+        temp_time = datetime.datetime.now()
         evaluated_chains = map(lambda chain: (chain_eval(chain), chain), service_chains)
         #sorting by comparing leak values and chain length in case of tie
         evaluated_chains.sort(key=lambda x: (x[0], len(x[1])))
         print(evaluated_chains)
+        rqst.add_msg(Message.INFO, 'evaluating chains in terms of sensitive data leakage value took %d seconds' % ((datetime.datetime.now()-temp_time).total_seconds()))
+
 
         msg = '%s sensitive data leakage value ' \
               '(with the applied weights for various levels of sensitivity) is %d'
@@ -357,6 +359,7 @@ def blend(request, blender_id):
                     constraints_stack.pop()
                 return False
 
+        temp_time = datetime.datetime.now()
         user_constraints = []
         try:
             for attr in data['attributes']:
@@ -382,6 +385,8 @@ def blend(request, blender_id):
                         (chain_str(evaluated_chains[0][1]), evaluated_chains[0][0])
                         )
             evaluated_chains.pop(0)
+
+        rqst.add_msg(Message.INFO, 'blending and checking access control rules took %d seconds' % ((datetime.datetime.now()-temp_time).total_seconds()))
 
         if len(evaluated_chains) == 0:
             rqst.add_msg(Message.ERROR, "no service chain can process your request. This may be due to violation of "
@@ -529,7 +534,7 @@ def blend(request, blender_id):
                           12, 'adding not for %s to %s' % (beau(s1-s2), name2),
                         )
 
-
+        temp_time = datetime.datetime.now()
         service_chain_policy = Policy()
         for service in selected_chain:
             for rule in service.service_privacy_policy_rule_set.all():
@@ -560,6 +565,8 @@ def blend(request, blender_id):
                          "service chain privacy policy", "user privacy policy",
                          "output", False)
 
+        rqst.add_msg(Message.INFO, 'blending and checking privacy policies and preferences took %d seconds' % ((datetime.datetime.now()-temp_time).total_seconds()))
+
         if not ok[0]:
             rqst.add_msg(Message.ERROR, "can not use the service chain due to conflicts between "
                                    "service chain privacy policies and user privacy preferences and policies")
@@ -581,6 +588,7 @@ def blend(request, blender_id):
             element.service = service
             element.save()
             idx += 1
+
 
 
         return confirm()
