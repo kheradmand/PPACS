@@ -260,7 +260,7 @@ class ConstraintChecker:
         else:
             raise Exception('should not be here! %s %s %s' %
                             (constraint.variable, constraint.operator, constraint.value))
-        print(self)
+        #print(self)
 
 
 
