@@ -497,7 +497,7 @@ def blend(request, blender_id):
                     if s1 >= s2:
                         pass
                     else:
-                        error(2,'adding a subset of only for %s to %s' % (beau(s2-s1), name1, (s1-s2), name2),
+                        error(2,'adding a subset of only for %s to %s' % (beau(s2-s1), name1, beau(s1-s2), name2),
                           8, 'removing only for %s from %s' % (beau(s2-s1), name2, beau(s1-s2), name2),
                         )
                 else:
