@@ -15,4 +15,4 @@ initiates a negotiation process with the user about its privacy.
 
 ### How to run
 
-The prototype system has been implemented in form a website using the [Django Framework](https://www.djangoproject.com/). You can refer yo Django's website in order to learn how to run it.
+The prototype system has been implemented in form a web app using the [Django Web Framework](https://www.djangoproject.com/). You can refer to the framework's website in order to learn how to run the apps.
